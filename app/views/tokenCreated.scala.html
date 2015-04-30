@@ -1,0 +1,40 @@
+@(user: String, key: String)
+@import helper._
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Token created</title>
+</head>
+
+<body>
+
+  <h1>Token created</h1>
+
+  <p>A new credentials key has been successfully created for user @user. The key is</p>
+
+  <code>@key</code>
+
+  <p>You can use the token to access a protected data.met.no web sevice
+  by oauth2 Client Credentials Flow:</p>
+
+  <p>First send a https POST to https://data.met.no/requestAccessToken, with body:</p>
+
+  <code>
+    grant_type=client_credentials&client_id=@key&client_secret=
+  </code>
+
+ <p>You will receive a json document, with an <em>access_token</em> key containing a temporary token, which will
+ give you access for a short period of time. When requesting data from data.met.no,
+ add the following header to your request:</p>
+
+ <code>
+   Authorization: Bearer TOKEN
+ </code>
+
+  <p>...where TOKEN is the token provided to you in the step before.</p>
+
+  <p>Once the token has expired, you may simply request a new one to keep accessing data from the server.</p>
+
+</body>
+</html>

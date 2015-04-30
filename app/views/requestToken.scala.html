@@ -1,0 +1,25 @@
+@(tokenRequestForm: Form[String])
+@import helper._
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Request API token</title>
+</head>
+
+<body>
+
+  <h1>Request API access</h1>
+
+  <p>You need an API client id to use data.met.no's services. Anyone can get a client id,
+  we only ask you to give your email address, so we can contact you in case
+  there is a problem with your key. The email address you give here will not
+  be used to contact you for any other reasons than key problems.</p>
+
+  @form(action = controllers.authorization.routes.AuthorizationController.newClientRequest, 'class -> "user_input_form") {
+    @inputText(tokenRequestForm("Contact address"), 'id -> "user_email")
+    <input type="submit" value="Submit" />
+  }
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Routes
+# This file defines all AuthorizationController routes (Higher priority routes first)
+# ~~~~
+
+# Allow checking authorization status
+GET     /secret.html         controllers.authorization.AuthorizationController.secret
+
+GET     /requestToken.html   controllers.authorization.AuthorizationController.requestTokenPage
+POST    /requestToken.html   controllers.authorization.AuthorizationController.newClientRequest
+GET     /tokenCreated.html   controllers.authorization.AuthorizationController.tokenCreated(user: String, token: String)
+
+POST    /requestAccessToken controllers.authorization.AuthorizationController.requestAccessToken
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file        controllers.Assets.at(path="/public", file)
