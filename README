@@ -1,0 +1,5 @@
+Oauth2 support for metapi
+=========================
+
+Provides oauth2 Client Credentials flow for metapi
+
