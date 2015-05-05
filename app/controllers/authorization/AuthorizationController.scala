@@ -68,15 +68,14 @@ object AuthorizationController extends Controller {
         },
         user => {
           val client = Authorization.newClient(user)
-          //Redirect(routes.AuthorizationController.tokenCreated(user, client))
+          Logger.debug(s"Registered key ${client} for user ${user}")
           Redirect(routes.AuthorizationController.tokenCreated).flashing(
             "user" -> user,
-            "client" -> client)
+            "key" -> client)
         })
   }
 
   // TODO: Rename to newClientCreated, or something
-  //def tokenCreated(user: String, token: String) = Action {
   def tokenCreated() = Action {
     implicit request =>
       Ok(views.html.tokenCreated())
