@@ -17,7 +17,7 @@
   be used to contact you for any other reasons than key problems.</p>
 
   @form(action = controllers.authorization.routes.AuthorizationController.newClientRequest, 'class -> "user_input_form") {
-    @inputText(tokenRequestForm("Contact address"), 'id -> "user_email")
+    @inputText(tokenRequestForm("email"), 'id -> "user_email")
     <input type="submit" value="Submit" />
   }
 

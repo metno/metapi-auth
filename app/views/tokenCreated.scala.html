@@ -1,4 +1,4 @@
-@(user: String, key: String)
+@()(implicit flash: Flash, request: RequestHeader)
 @import helper._
 
 <!DOCTYPE html>
@@ -11,9 +11,9 @@
 
   <h1>Token created</h1>
 
-  <p>A new credentials key has been successfully created for user @user. The key is</p>
+  <p>A new credentials key has been successfully created for user @flash.get("user"). The key is</p>
 
-  <code>@key</code>
+  <code id='key'>@flash.get("key")</code>
 
   <p>You can use the token to access a protected data.met.no web sevice
   by oauth2 Client Credentials Flow:</p>
@@ -21,7 +21,7 @@
   <p>First send a https POST to https://data.met.no/requestAccessToken, with body:</p>
 
   <code>
-    grant_type=client_credentials&client_id=@key&client_secret=
+    grant_type=client_credentials&client_id=@flash.get("key")&client_secret=
   </code>
 
  <p>You will receive a json document, with an <em>access_token</em> key containing a temporary token, which will

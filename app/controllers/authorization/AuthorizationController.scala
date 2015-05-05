@@ -46,7 +46,7 @@ object AuthorizationController extends Controller {
     Ok("Don't tell\n")
   }
 
-  private val credentialsRequestForm = Form(single("Contact address" -> email))
+  private val credentialsRequestForm = Form(single("email" -> email))
 
   /**
    * Get the page to order api tokens
@@ -68,13 +68,18 @@ object AuthorizationController extends Controller {
         },
         user => {
           val client = Authorization.newClient(user)
-          Redirect(routes.AuthorizationController.tokenCreated(user, client))
+          //Redirect(routes.AuthorizationController.tokenCreated(user, client))
+          Redirect(routes.AuthorizationController.tokenCreated).flashing(
+            "user" -> user,
+            "client" -> client)
         })
   }
 
   // TODO: Rename to newClientCreated, or something
-  def tokenCreated(user: String, token: String) = Action {
-    Ok(views.html.tokenCreated(user, token))
+  //def tokenCreated(user: String, token: String) = Action {
+  def tokenCreated() = Action {
+    implicit request =>
+      Ok(views.html.tokenCreated())
   }
 
   private val accessTokenRequestForm = Form(

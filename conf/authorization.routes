@@ -7,7 +7,8 @@ GET     /secret.html         controllers.authorization.AuthorizationController.s
 
 GET     /requestToken.html   controllers.authorization.AuthorizationController.requestTokenPage
 POST    /requestToken.html   controllers.authorization.AuthorizationController.newClientRequest
-GET     /tokenCreated.html   controllers.authorization.AuthorizationController.tokenCreated(user: String, token: String)
+#GET     /tokenCreated.html   controllers.authorization.AuthorizationController.tokenCreated(user: String, token: String)
+GET     /tokenCreated.html   controllers.authorization.AuthorizationController.tokenCreated
 
 POST    /requestAccessToken controllers.authorization.AuthorizationController.requestAccessToken
 
