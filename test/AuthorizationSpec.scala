@@ -37,34 +37,40 @@ import no.met.security._
 class AuthorizationSpec extends Specification with NoTimeConversions {
 
   "Authorization object" should {
-    "create authorization keys" in new WithApplication {
-      Authorization.newClient("someone@met.no") must not beEmpty
-    }
+    "create authorization keys" in
+      running(TestUtil.app) {
+        Authorization.newClient("someone@met.no") must not beEmpty
+      }
 
-    "create different keys for different addresses" in new WithApplication {
-      val clientA = Authorization.newClient("someone@met.no")
-      val clientB = Authorization.newClient("someoneelse@met.no")
-      clientA must !==(clientB)
-    }
+    "create different keys for different addresses" in
+      running(TestUtil.app) {
+        val clientA = Authorization.newClient("someone@met.no")
+        val clientB = Authorization.newClient("someoneelse@met.no")
+        clientA must !==(clientB)
+      }
 
-    "create same key when requested several times for same address" in new WithApplication {
-      val clientA = Authorization.newClient("someone@met.no")
-      val clientB = Authorization.newClient("someone@met.no")
-      clientA must be equalTo clientB
-    }
+    "create same key when requested several times for same address" in
+      running(TestUtil.app) {
+        val clientA = Authorization.newClient("someone@met.no")
+        val clientB = Authorization.newClient("someone@met.no")
+        clientA must be equalTo clientB
+      }
 
-    "authenticate previously created keys" in new WithApplication {
-      val clientId = Authorization.newClient("someone@met.no")
-      Authorization.authorized(AccessTokenRequest("client_credentials", clientId, "")) must not beNone
-    }
+    "authenticate previously created keys" in
+      running(TestUtil.app) {
+        val clientId = Authorization.newClient("someone@met.no")
+        Authorization.authorized(AccessTokenRequest("client_credentials", clientId, "")) must not beFailedTry
+      }
 
-    "not authenticate random keys" in new WithApplication {
-      Authorization.authorized(AccessTokenRequest("client_credentials", "invalid-clientId", "")) must beNone
-    }
+    "not authenticate random keys" in
+      running(TestUtil.app) {
+        Authorization.authorized(AccessTokenRequest("client_credentials", "invalid-clientId", "")) must beFailedTry
+      }
 
-    "not authenticate NULL keys" in new WithApplication {
-      Authorization.authorized(null) must beNone // scalastyle:ignore null
-    }
+    "not authenticate NULL keys" in
+      running(TestUtil.app) {
+        Authorization.authorized(null) must beFailedTry // scalastyle:ignore null
+      }
 
     /**
      * Generates a valid access token, for testing
@@ -75,22 +81,26 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
       Authorization.generateBearerToken(accessRequest, Duration.millis(milliSecondsToLive)).getOrElse("")
     }
 
-    "generate bearer tokens" in new WithApplication {
-      getBearerToken() must not beEmpty
-    }
+    "generate bearer tokens" in
+      running(TestUtil.app) {
+        getBearerToken() must not beEmpty
+      }
 
-    "generate different bearer tokens for different users" in new WithApplication {
-      getBearerToken() must not equalTo getBearerToken("someone_else@met.no")
-    }
+    "generate different bearer tokens for different users" in
+      running(TestUtil.app) {
+        getBearerToken() must not equalTo getBearerToken("someone_else@met.no")
+      }
 
-    "accept valid bearer tokens" in new WithApplication {
-      val token = getBearerToken()
-      Authorization.validateBearerToken(token) must beTrue
-    }
+    "accept valid bearer tokens" in
+      running(TestUtil.app) {
+        val token = getBearerToken()
+        Authorization.validateBearerToken(token) must beTrue
+      }
 
-    "reject invalid bearer tokens" in new WithApplication {
-      val token = getBearerToken() + "a"
-      Authorization.validateBearerToken(token) must beFalse
-    }
+    "reject invalid bearer tokens" in
+      running(TestUtil.app) {
+        val token = getBearerToken() + "a"
+        Authorization.validateBearerToken(token) must beFalse
+      }
   }
 }

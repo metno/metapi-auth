@@ -29,6 +29,7 @@ import play.api.Play.current
 import play.api._
 import anorm._
 import play.api.db._
+import java.util.UUID
 import java.sql.SQLException
 import scala.util._
 import com.github.nscala_time.time.Imports._
@@ -38,10 +39,10 @@ import com.github.nscala_time.time.Imports._
  */
 object Authorization {
 
-  /**
-   * Create a unique key to use as client_id
-   */
-  private def createUniqueKey(): String = java.util.UUID.randomUUID.toString
+  private def createUniqueKey() = UUID.randomUUID
+  private implicit def uuidToStatement = new ToStatement[UUID] {
+    def set(s: java.sql.PreparedStatement, index: Int, aValue: UUID): Unit = s.setObject(index, aValue)
+  }
 
   /**
    * Create new client credentials, associated with the given email address.
@@ -54,18 +55,18 @@ object Authorization {
   def newClient(userEmail: String): String = {
     DB.withTransaction("authorization") { implicit conn =>
 
-      val previouslyExisting = SQL("SELECT api_key FROM authorized_keys WHERE owner={email}")
+      val previouslyExisting = SQL("SELECT client_id FROM authorized_keys WHERE owner={email}")
         .on("email" -> userEmail)
         .apply()
       if (previouslyExisting.isEmpty) {
         val key = createUniqueKey()
-        SQL("INSERT INTO authorized_keys (api_key, owner) VALUES ({api_key}, {email})")
-          .on("api_key" -> key, "email" -> userEmail)
+        SQL("INSERT INTO authorized_keys (client_id, owner) VALUES ({client_id}::uuid, {email})")
+          .on("client_id" -> key, "email" -> userEmail)
           .executeInsert()
-        key
+        key toString
       } else {
         val row = previouslyExisting.head
-        row[String]("api_key")
+        row[UUID]("client_id") toString
       }
     }
   }
@@ -73,21 +74,20 @@ object Authorization {
   /**
    * Get the id associated with the given api key
    */
-  private def idOf(apiKey: String): Option[Long] =
+  private def idOf(clientId: UUID): Long =
     DB.withConnection("authorization") { implicit conn =>
-      val result = SQL("SELECT owner_id FROM authorized_keys WHERE api_key={token} AND active='true'")
-        .on("token" -> apiKey)
+      val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={clientId} AND active='true'")
+        .on("clientId" -> clientId)
         .apply() map {
           row =>
-            row[Option[Long]]("owner_id")
+            row[Long]("owner_id")
         }
 
       if (result.isEmpty) {
-        Logger.debug("No user valid associated with the given key: " + apiKey)
-        None
-      } else {
-        result head
+        throw new Exception("No user valid associated with the given key: " + clientId)
       }
+
+      result head
     }
 
   /**
@@ -96,15 +96,13 @@ object Authorization {
    * @param request The request for a token
    * @return false, unless the given request is valid and should be permitted
    */
-  def authorized(request: AccessTokenRequest): Option[Long] = {
-    if (request != null && // scalastyle:ignore null
-      request.grantType == "client_credentials" &&
-      request.clientSecret.isEmpty()) {
-      idOf(request.clientId)
-    } else {
-      Logger.debug("Missing required authorization fields in request")
-      None
+  def authorized(request: AccessTokenRequest): Try[Long] = Try {
+    if (request == null || // scalastyle:ignore null
+      request.grantType != "client_credentials" ||
+      !request.clientSecret.isEmpty()) {
+      throw new Exception("Missing required authorization fields in request")
     }
+    idOf(UUID.fromString(request.clientId))
   }
 
   /**
@@ -114,7 +112,7 @@ object Authorization {
    * @param timeToLive How long the returned token should be valid
    * @return a valid token, or None if authorized(request) is false
    */
-  def generateBearerToken(request: AccessTokenRequest, timeToLive: Duration = 10 minutes): Option[String] = {
+  def generateBearerToken(request: AccessTokenRequest, timeToLive: Duration = 10 minutes): Try[String] = {
 
     authorized(request) map { userId: Long =>
       val token = BearerToken.create(userId, timeToLive)
@@ -127,15 +125,12 @@ object Authorization {
    */
   def validateBearerToken(token: String): Boolean = {
     BearerToken.parse(token) match {
-      case Some(bearerToken) => {
-        if (bearerToken.isValid) {
-          Logger.debug(s"Successful access by userid=${bearerToken.userId}")
-          true
-        } else {
-          false
-        }
+      case scala.util.Success(bearerToken) =>
+        bearerToken.isValid
+      case Failure(x) => {
+        Logger.debug(x.getMessage)
+        false
       }
-      case _ => false
     }
   }
 

@@ -18,6 +18,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.1"
 
+javaOptions += "-Djunit.outdir=target/test-report"
 
 
 libraryDependencies ++= Seq(
@@ -25,6 +26,7 @@ libraryDependencies ++= Seq(
   anorm,
   cache,
   ws,
+ "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
  "com.github.nscala-time" %% "nscala-time" % "1.8.0",
  "com.google.guava" % "guava" % "18.0"
 )

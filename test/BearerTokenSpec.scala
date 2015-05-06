@@ -26,6 +26,7 @@
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
+import scala.util._
 import play.api.test._
 import play.api.test.Helpers._
 import no.met.security._
@@ -41,48 +42,55 @@ class BearerTokenSpec extends Specification {
 
   "BearerTokens" should {
 
-    "be encodeable" in new WithApplication {
-      createToken().encoded must not beEmpty
-    }
+    "be encodeable" in
+      running(TestUtil.app) {
+        createToken().encoded must not beEmpty
+      }
 
-    "isValid must give correct answer" in new WithApplication {
-      val token = createToken(100)
-      token.isValid must beTrue
-      Thread.sleep(100)
-      token.isValid must beFalse
-    }
+    "isValid must give correct answer" in
+      running(TestUtil.app) {
+        val token = createToken(100)
+        token.isValid must beTrue
+        Thread.sleep(100)
+        token.isValid must beFalse
+      }
 
-    "be parseable" in new WithApplication {
-      val token = createToken()
-      val representation = token.encoded
-      BearerToken.parse(representation) must equalTo(Some(token))
-    }
+    "be parseable" in
+      running(TestUtil.app) {
+        val token = createToken()
+        val representation = token.encoded
+        BearerToken.parse(representation) must equalTo(Success(token))
+      }
 
-    "have a parseable user" in new WithApplication {
-      val token = createToken(userId = 1)
-      val representation = token.encoded
-      val parsed = BearerToken.parse(representation).get
-      parsed.userId must equalTo(1)
-    }
+    "have a parseable user" in
+      running(TestUtil.app) {
+        val token = createToken(userId = 1)
+        val representation = token.encoded
+        val parsed = BearerToken.parse(representation).get
+        parsed.userId must equalTo(1)
+      }
 
-    "have a parseable user" in new WithApplication {
-      val token = createToken(userId = 2)
-      val representation = token.encoded
-      val parsed = BearerToken.parse(representation).get
-      parsed.userId must equalTo(2)
-    }
+    "have a parseable user" in
+      running(TestUtil.app) {
+        val token = createToken(userId = 2)
+        val representation = token.encoded
+        val parsed = BearerToken.parse(representation).get
+        parsed.userId must equalTo(2)
+      }
 
-    "reject invalid tokens" in new WithApplication {
-      var code = createToken().encoded
-      code = '_' + code.substring(1)
-      BearerToken.parse(code) must beNone
-    }
+    "reject invalid tokens" in
+      running(TestUtil.app) {
+        var code = createToken().encoded
+        code = '_' + code.substring(1)
+        BearerToken.parse(code) must beFailedTry
+      }
 
-    "have a unique signature" in new WithApplication {
-      val signatureA = createToken(50).encoded.split("\\|")(0)
-      val signatureB = createToken(40).encoded.split("\\|")(0)
-      signatureA must not equalTo signatureB
-    }
+    "have a unique signature" in
+      running(TestUtil.app) {
+        val signatureA = createToken(50).encoded.split("\\|")(0)
+        val signatureB = createToken(40).encoded.split("\\|")(0)
+        signatureA must not equalTo signatureB
+      }
   }
 }
 

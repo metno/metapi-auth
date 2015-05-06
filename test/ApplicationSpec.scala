@@ -52,49 +52,56 @@ class ApplicationSpec extends Specification {
 
   "Application" should {
 
-    "send 404 on a bad request" in new WithApplication {
-      route(FakeRequest(GET, "/boum")) must beNone
-    }
+    "send 404 on a bad request" in
+      running(TestUtil.app) {
+        route(FakeRequest(GET, "/boum")) must beNone
+      }
 
-    "disallow requests to secure pages with missing authentication token" in new WithApplication {
-      val secret = route(FakeRequest(GET, "/secret.html")).get
-      status(secret) must equalTo(UNAUTHORIZED)
-      contentAsString(secret) must not contain ("Don't tell")
-    }
+    "disallow requests to secure pages with missing authentication token" in
+      running(TestUtil.app) {
+        val secret = route(FakeRequest(GET, "/secret.html")).get
+        status(secret) must equalTo(UNAUTHORIZED)
+        contentAsString(secret) must not contain ("Don't tell")
+      }
 
-    "accept credentials to get an access token" in new WithApplication {
-      getAccessToken() must not beEmpty
-    }
+    "accept credentials to get an access token" in
+      running(TestUtil.app) {
+        getAccessToken() must not beEmpty
+      }
 
-    "deliver different credentials to different users" in new WithApplication {
-      getAccessToken("someone@met.no") must not equalTo getAccessToken("someone_else@met.no")
-    }
+    "deliver different credentials to different users" in
+      running(TestUtil.app) {
+        getAccessToken("someone@met.no") must not equalTo getAccessToken("someone_else@met.no")
+      }
 
-    "allow access when presented with valid access token" in new WithApplication {
-      val userToken = getAccessToken()
-      val headers = FakeHeaders(List("Authorization" -> List(s"Bearer $userToken")))
-      val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-      status(secret) must equalTo(OK)
-      contentAsString(secret) must contain("Don't tell")
-    }
+    "allow access when presented with valid access token" in
+      running(TestUtil.app) {
+        val userToken = getAccessToken()
+        val headers = FakeHeaders(List("Authorization" -> List(s"Bearer $userToken")))
+        val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
+        status(secret) must equalTo(OK)
+        contentAsString(secret) must contain("Don't tell")
+      }
 
-    "allow access multiple spaces in bearer token" in new WithApplication {
-      val userToken = getAccessToken()
-      val headers = FakeHeaders(List("Authorization" -> List(s"Bearer   $userToken")))
-      val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-      status(secret) must equalTo(OK)
-      contentAsString(secret) must contain("Don't tell")
-    }
+    "allow access multiple spaces in bearer token" in
+      running(TestUtil.app) {
+        val userToken = getAccessToken()
+        val headers = FakeHeaders(List("Authorization" -> List(s"Bearer   $userToken")))
+        val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
+        status(secret) must equalTo(OK)
+        contentAsString(secret) must contain("Don't tell")
+      }
 
-    "deny access when presented with invalid access token" in new WithApplication {
-      val headers = FakeHeaders(List("Authorization" -> List("Bearer invalidCredentials")))
-      val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-      status(secret) must equalTo(UNAUTHORIZED)
-      contentAsString(secret) must not contain ("Don't tell")
-    }
+    "deny access when presented with invalid access token" in
+      running(TestUtil.app) {
+        val headers = FakeHeaders(List("Authorization" -> List("Bearer invalidCredentials")))
+        val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
+        status(secret) must equalTo(UNAUTHORIZED)
+        contentAsString(secret) must not contain ("Don't tell")
+      }
 
     "allow requests to secure pages with missing authentication token if turned off in config" in
-      running(FakeApplication(additionalConfiguration = Map("auth.active" -> false))) {
+      running(TestUtil.app("auth.active" -> false)) {
 
         val secret = route(FakeRequest(GET, "/secret.html")).get
         status(secret) must equalTo(OK)
@@ -102,7 +109,7 @@ class ApplicationSpec extends Specification {
       }
 
     "disallow requests to secure pages with missing authentication token explicitly turned on in config" in
-      running(FakeApplication(additionalConfiguration = Map("auth.active" -> true))) {
+      running(TestUtil.app("auth.active" -> true)) {
 
         val secret = route(FakeRequest(GET, "/secret.html")).get
         status(secret) must equalTo(UNAUTHORIZED)
@@ -110,7 +117,7 @@ class ApplicationSpec extends Specification {
       }
 
     "Give error when authorization config is weird" in
-      running(FakeApplication(additionalConfiguration = Map("auth.active" -> "koko?"))) {
+      running(TestUtil.app("auth.active" -> "koko?")) {
 
         val secret = route(FakeRequest(GET, "/secret.html")).get
         status(secret) must equalTo(INTERNAL_SERVER_ERROR)

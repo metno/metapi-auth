@@ -96,35 +96,29 @@ object BearerToken {
    * Parse a token string, as encoded by bearerToken.encoded. Will return None
    * if unable to parse, or signature is invalid
    */
-  def parse(encoded: String): Option[BearerToken] = {
+  def parse(encoded: String): Try[BearerToken] = Try {
     val tokens = encoded.split("\\|")
-    if (tokens.length == 2) {
-      val signature = tokens(0)
-      val payload = tokens(1)
-      if (sign(payload) == signature) {
-        parsePayload(payload)
-      } else {
-        Logger.debug("Invalid signature for bearer token " + encoded)
-        None
-      }
-    } else {
-      Logger.debug("Unable to separate checksum from payload in bearer token: " + encoded)
-      None
+    if (tokens.length != 2) {
+      throw new Error("Unable to separate checksum from payload in bearer token: " + encoded)
     }
+    val signature = tokens(0)
+    val payload = tokens(1)
+    if (sign(payload) != signature) {
+      throw new Error("Invalid signature for bearer token " + encoded)
+    }
+    parsePayload(payload)
   }
 
-  private def parsePayload(payload: String): Option[BearerToken] = Try {
+  private def parsePayload(payload: String): BearerToken = {
 
     val data = encoding.decode(payload)
     val userId = ByteBuffer.wrap(data, 0, Longs.BYTES).getLong()
     val expirationTime = ByteBuffer.wrap(data, Longs.BYTES, Longs.BYTES).getLong()
-    BearerToken(userId, new DateTime(expirationTime))
-  } match {
-    case Success(token) if (token isValid) => Some(token)
-    case _ => {
-      Logger.debug("Unable to parse bearer token payload: " + payload)
-      None
+    val token = BearerToken(userId, new DateTime(expirationTime))
+    if (!token.isValid) {
+      throw new Error("Unable to parse bearer token payload: " + payload)
     }
+    token
   }
 
   private val encryptionKey: Array[Byte] = {
