@@ -1,4 +1,4 @@
-name := """metapi-auth"""
+name := """auth"""
 
 organization := "no.met.data"
 
