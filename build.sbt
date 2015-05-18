@@ -20,6 +20,19 @@ scalaVersion := "2.11.1"
 
 javaOptions += "-Djunit.outdir=target/test-report"
 
+ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := true
+
+ScoverageSbtPlugin.ScoverageKeys.coverageMinimum := 100
+
+ScoverageSbtPlugin.ScoverageKeys.coverageFailOnMinimum := true
+
+ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := """
+  <empty>;
+  value.ApiResponse;
+  ReverseApplication;
+  ReverseAssets;
+  Routes
+"""
 
 libraryDependencies ++= Seq(
   jdbc,
