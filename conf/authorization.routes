@@ -5,10 +5,9 @@
 # Allow checking authorization status
 GET     /secret.html         controllers.authorization.AuthorizationController.secret
 
-GET     /requestToken.html   controllers.authorization.AuthorizationController.requestTokenPage
-POST    /requestToken.html   controllers.authorization.AuthorizationController.newClientRequest
-#GET     /tokenCreated.html   controllers.authorization.AuthorizationController.tokenCreated(user: String, token: String)
-GET     /tokenCreated.html   controllers.authorization.AuthorizationController.tokenCreated
+GET     /requestCredentials.html   controllers.authorization.AuthorizationController.requestCredentialsPage
+POST    /requestCredentials.html   controllers.authorization.AuthorizationController.newCredentialsRequest
+GET     /credentialsCreated.html   controllers.authorization.AuthorizationController.credentialsCreated
 
 POST    /requestAccessToken controllers.authorization.AuthorizationController.requestAccessToken
 

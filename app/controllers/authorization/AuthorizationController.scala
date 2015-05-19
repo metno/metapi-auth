@@ -53,32 +53,32 @@ object AuthorizationController extends Controller {
    *
    * TODO: Rename to requestNewClientPage or something
    */
-  def requestTokenPage = Action {
-    Ok(views.html.requestToken(credentialsRequestForm))
+  def requestCredentialsPage = Action {
+    Ok(views.html.requestCredentials(credentialsRequestForm))
   }
 
   /**
    * Result from having submitted a request for a new api token
    */
-  def newClientRequest = Action {
+  def newCredentialsRequest = Action {
     implicit request =>
       credentialsRequestForm.bindFromRequest.fold(
         formWithErrors => {
-          BadRequest(views.html.requestToken(formWithErrors)) //"You need to provide a valid email address to get a key - please try again")
+          BadRequest(views.html.requestCredentials(formWithErrors)) //"You need to provide a valid email address to get a key - please try again")
         },
         user => {
           val client = Authorization.newClient(user)
           Logger.debug(s"Registered key ${client} for user ${user}")
-          Redirect(routes.AuthorizationController.tokenCreated).flashing(
+          Redirect(routes.AuthorizationController.credentialsCreated).flashing(
             "user" -> user,
             "key" -> client)
         })
   }
 
   // TODO: Rename to newClientCreated, or something
-  def tokenCreated() = Action {
+  def credentialsCreated() = Action {
     implicit request =>
-      Ok(views.html.tokenCreated())
+      Ok(views.html.credentialsCreated())
   }
 
   private val accessTokenRequestForm = Form(

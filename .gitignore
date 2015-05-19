@@ -13,8 +13,7 @@ dist
 /.project
 /RUNNING_PID
 /.settings
-/bin
-conf/auth.conf
+conf/development.conf
 /lib
 development.conf
 *~
