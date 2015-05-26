@@ -32,6 +32,10 @@ import no.met.security._
 import play.api.http.HeaderNames
 import play.api.mvc.AnyContentAsFormUrlEncoded
 import net.sf.ehcache.config.Configuration
+import play.mvc.Results.Redirect
+import anorm._
+import play.api.db._
+import play.api.Play.current
 
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
@@ -64,9 +68,63 @@ class ApplicationSpec extends Specification {
         contentAsString(secret) must not contain ("Don't tell")
       }
 
+    "show token creation page" in
+      running(TestUtil.app) {
+        val createToken = route(FakeRequest(GET, "/requestCredentials.html")).get
+        status(createToken) must equalTo(OK)
+      }
+
+    "handle bad requests for credentials" in
+      running(TestUtil.app) {
+        val request = FakeRequest(POST, "/requestCredentials.html") withFormUrlEncodedBody ("whatever" -> "foo")
+        val tokenRequest = route(request).get
+        status(tokenRequest) must equalTo(BAD_REQUEST)
+      }
+
+    "create credentials upon request" in
+      running(TestUtil.app) {
+        val user = java.util.UUID.randomUUID().toString() + "@met.no"
+        val request = FakeRequest(POST, "/requestCredentials.html") withFormUrlEncodedBody ("email" -> user)
+        val tokenRequest = route(request).get
+        status(tokenRequest) must equalTo(SEE_OTHER)
+
+        val nextUrl = redirectLocation(tokenRequest).get
+        val landingPage = route(FakeRequest(GET, nextUrl)).get
+
+        status(landingPage) must equalTo(OK)
+
+        // This does not work: The resulting page seems to get a null flash
+        // scope, or something, meaning that the client_id and client_secret
+        // Is not shown in the resulting page.
+        //        DB.withTransaction("authorization") { implicit conn =>
+        //          val result = SQL("SELECT client_id, client_secret FROM authorized_keys WHERE email={email}")
+        //            .on("email" -> user)
+        //            .apply() map {
+        //              row =>
+        //                (row[java.util.UUID]("client_id"), row[java.util.UUID]("client_secret"))
+        //            }
+        //          result.size must equalTo(1)
+        //          val id = result(0)._1.toString
+        //          val secret = result(0)._2.toString
+        //          contentAsString(landingPage) must contain(id)
+        //          contentAsString(landingPage) must contain(secret)
+        //        }
+      }
+
     "accept credentials to get an access token" in
       running(TestUtil.app) {
         getAccessToken() must not beEmpty
+      }
+
+    "reject invalid credentials to get an access token" in
+      running(TestUtil.app) {
+        getAccessToken() must not beEmpty
+      }
+
+    "send unauthorized when sending rubbish request for bearer token" in
+      running(TestUtil.app) {
+        val result = route(FakeRequest(POST, "/requestAccessToken").withFormUrlEncodedBody("whatever" -> "rubbish")).get
+        status(result) must equalTo(BAD_REQUEST)
       }
 
     "deliver different credentials to different users" in
@@ -81,6 +139,17 @@ class ApplicationSpec extends Specification {
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must equalTo(OK)
         contentAsString(secret) must contain("Don't tell")
+      }
+
+    "deny access when presented with valid access token" in
+      running(TestUtil.app) {
+        val body = AnyContentAsFormUrlEncoded(
+          Map("grant_type" -> List("client_credentials"),
+            "client_id" -> List("sga"),
+            "client_secret" -> List("asgs")))
+
+        val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
+        status(result) must equalTo(UNAUTHORIZED)
       }
 
     "allow access multiple spaces in bearer token" in

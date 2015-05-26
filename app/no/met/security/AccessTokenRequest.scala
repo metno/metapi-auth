@@ -28,12 +28,4 @@ package no.met.security
 /**
  * A request for a client access token
  */
-case class AccessTokenRequest(grantType: String, clientId: String, clientSecret: String) {
-
-  /**
-   * String representation, can also be used as body of a HTTP POST to get an access token
-   */
-  override def toString(): String = {
-    s"grant_type=$grantType&client_id=$clientId&client_secret=$clientSecret"
-  }
-}
+case class AccessTokenRequest(grantType: String, clientId: String, clientSecret: String)

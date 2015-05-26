@@ -22,16 +22,19 @@ javaOptions += "-Djunit.outdir=target/test-report"
 
 ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := true
 
-ScoverageSbtPlugin.ScoverageKeys.coverageMinimum := 100
+ScoverageSbtPlugin.ScoverageKeys.coverageMinimum := 98
 
 ScoverageSbtPlugin.ScoverageKeys.coverageFailOnMinimum := true
+
+
 
 ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := """
   <empty>;
   value.ApiResponse;
   ReverseApplication;
   ReverseAssets;
-  Routes
+  authorization.Routes;
+  views.html;
 """
 
 libraryDependencies ++= Seq(

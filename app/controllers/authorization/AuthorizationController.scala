@@ -90,7 +90,7 @@ object AuthorizationController extends Controller {
   def requestAccessToken = Action {
     implicit request =>
       accessTokenRequestForm.bindFromRequest.fold(
-        errors => Unauthorized("Invalid input\n"),
+        errors => BadRequest("Invalid input\n"),
         validRequest => {
           Authorization.generateBearerToken(validRequest) match {
             case Success(key) =>

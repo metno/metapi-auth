@@ -78,6 +78,12 @@ class BearerTokenSpec extends Specification {
         parsed.userId must equalTo(2)
       }
 
+    "reject expired tokens" in
+      running(TestUtil.app) {
+        val encoded = new BearerToken(0, DateTime.yesterday).encoded
+        BearerToken.parse(encoded) must beFailedTry
+      }
+
     "reject invalid tokens" in
       running(TestUtil.app) {
         var code = createToken().encoded

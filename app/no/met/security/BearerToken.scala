@@ -116,7 +116,7 @@ object BearerToken {
     val expirationTime = ByteBuffer.wrap(data, Longs.BYTES, Longs.BYTES).getLong()
     val token = BearerToken(userId, new DateTime(expirationTime))
     if (!token.isValid) {
-      throw new Error("Unable to parse bearer token payload: " + payload)
+      throw new Error("Invalid token")
     }
     token
   }

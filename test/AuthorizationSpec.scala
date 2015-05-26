@@ -97,6 +97,18 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
         Authorization.validateBearerToken(token) must beTrue
       }
 
+    "accept Authorization request with bearer token" in
+      running(TestUtil.app) {
+        val token = getBearerToken()
+        Authorization.validateAuthorization(s"Bearer $token") must beTrue
+      }
+
+    "reject Authorization request with bearer token" in
+      running(TestUtil.app) {
+        val token = getBearerToken()
+        Authorization.validateAuthorization(s"$token") must beFalse
+      }
+
     "reject invalid bearer tokens" in
       running(TestUtil.app) {
         val token = getBearerToken() + "a"
