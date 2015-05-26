@@ -52,57 +52,48 @@ object Authorization {
    * @param userEmail The email address the generated key should be associated with
    * @return Valid credentials, associated with the given email address
    */
-  def newClient(userEmail: String): String = {
+  def newClient(userEmail: String): ClientCredentials = {
     DB.withTransaction("authorization") { implicit conn =>
 
-      val previouslyExisting = SQL("SELECT client_id FROM authorized_keys WHERE owner={email}")
-        .on("email" -> userEmail)
-        .apply()
-      if (previouslyExisting.isEmpty) {
-        val key = createUniqueKey()
-        SQL("INSERT INTO authorized_keys (client_id, owner) VALUES ({client_id}::uuid, {email})")
-          .on("client_id" -> key, "email" -> userEmail)
-          .executeInsert()
-        key toString
-      } else {
-        val row = previouslyExisting.head
-        row[UUID]("client_id") toString
+      val id = createUniqueKey()
+      val secret = createUniqueKey()
+      SQL("INSERT INTO authorized_keys (client_id, client_secret, email) VALUES ({client_id}, {client_secret}, {email})")
+        .on("client_id" -> id, "client_secret" -> secret, "email" -> userEmail)
+        .executeInsert()
+      ClientCredentials(id toString, secret toString)
+    }
+  }
+
+  @throws[Exception]("If unable to access database, or not authenticated")
+  private def authenticate(client: ClientCredentials): Long = {
+    DB.withConnection("authorization") { implicit conn =>
+      val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={id}::uuid AND client_secret={secret}::uuid AND active='true'")
+        .on("id" -> client.id, "secret" -> client.secret)
+        .apply() map {
+          row =>
+            row[Long]("owner_id")
+        }
+      result.size match {
+        case 0 => throw new NoSuchElementException(s"Unsuccessful authentication attempt with client_id ${client.id}")
+        case 1 => result(0)
+        case _ => throw new NoSuchElementException(s"Several existing clients share the same id: ${client.id}")
       }
     }
   }
 
   /**
-   * Get the id associated with the given api key
-   */
-  private def idOf(clientId: UUID): Long =
-    DB.withConnection("authorization") { implicit conn =>
-      val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={clientId} AND active='true'")
-        .on("clientId" -> clientId)
-        .apply() map {
-          row =>
-            row[Long]("owner_id")
-        }
-
-      if (result.isEmpty) {
-        throw new Exception("No user valid associated with the given key: " + clientId)
-      }
-
-      result head
-    }
-
-  /**
    * Check if the given access token request is valid
    *
    * @param request The request for a token
-   * @return false, unless the given request is valid and should be permitted
+   * @return id of the authorized user
    */
   def authorized(request: AccessTokenRequest): Try[Long] = Try {
     if (request == null || // scalastyle:ignore null
-      request.grantType != "client_credentials" ||
-      !request.clientSecret.isEmpty()) {
+      request.grantType != "client_credentials") {
       throw new Exception("Missing required authorization fields in request")
     }
-    idOf(UUID.fromString(request.clientId))
+    // At this time authenticated == authorized
+    authenticate(request.credentials)
   }
 
   /**

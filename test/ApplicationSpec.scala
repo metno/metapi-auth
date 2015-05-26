@@ -41,11 +41,11 @@ import play.api.Play.current
 class ApplicationSpec extends Specification {
 
   def getAccessToken(user: String = "someone@met.no"): String = {
-    val key = Authorization.newClient(user)
+    val client = Authorization.newClient(user)
     val body = AnyContentAsFormUrlEncoded(
       Map("grant_type" -> List("client_credentials"),
-        "client_id" -> List(key),
-        "client_secret" -> List("")))
+        "client_id" -> List(client.id),
+        "client_secret" -> List(client.secret)))
 
     val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
     status(result) must equalTo(OK)

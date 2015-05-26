@@ -39,7 +39,9 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
   "Authorization object" should {
     "create authorization keys" in
       running(TestUtil.app) {
-        Authorization.newClient("someone@met.no") must not beEmpty
+        val client = Authorization.newClient("someone@met.no")
+        ((client.id) must not beEmpty)
+        ((client.secret) must not beEmpty)
       }
 
     "create different keys for different addresses" in
@@ -49,17 +51,17 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
         clientA must !==(clientB)
       }
 
-    "create same key when requested several times for same address" in
+    "create different key when requested several times for same address" in
       running(TestUtil.app) {
         val clientA = Authorization.newClient("someone@met.no")
         val clientB = Authorization.newClient("someone@met.no")
-        clientA must be equalTo clientB
+        clientA must !==(clientB)
       }
 
     "authenticate previously created keys" in
       running(TestUtil.app) {
-        val clientId = Authorization.newClient("someone@met.no")
-        Authorization.authorized(AccessTokenRequest("client_credentials", clientId, "")) must not beFailedTry
+        val client = Authorization.newClient("someone@met.no")
+        Authorization.authorized(AccessTokenRequest("client_credentials", client.id, client.secret)) must not beFailedTry
       }
 
     "not authenticate random keys" in
@@ -76,14 +78,22 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
      * Generates a valid access token, for testing
      */
     def getBearerToken(user: String = "someone@met.no", milliSecondsToLive: Long = 500): String = { // scalastyle:ignore magic.number
-      val clientId = Authorization.newClient(user)
-      val accessRequest = AccessTokenRequest("client_credentials", clientId, "")
+      val client = Authorization.newClient(user)
+      val accessRequest = AccessTokenRequest("client_credentials", client.id, client.secret)
       Authorization.generateBearerToken(accessRequest, Duration.millis(milliSecondsToLive)).getOrElse("")
     }
 
     "generate bearer tokens" in
       running(TestUtil.app) {
         getBearerToken() must not beEmpty
+      }
+
+    "not allow empty client_secret" in
+      running(TestUtil.app) {
+        val client = Authorization.newClient("someone@met.no")
+        val accessRequest = AccessTokenRequest("client_credentials", client.id, "")
+        val token = Authorization.generateBearerToken(accessRequest, Duration.millis(500)) // scalastyle:ignore magic.number
+        token must beFailedTry
       }
 
     "generate different bearer tokens for different users" in

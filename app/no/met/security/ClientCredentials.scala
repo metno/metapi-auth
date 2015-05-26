@@ -25,11 +25,4 @@
 
 package no.met.security
 
-/**
- * A request for a client access token
- */
-case class AccessTokenRequest(grantType: String, clientId: String, clientSecret: String) {
-
-  def credentials: ClientCredentials = ClientCredentials(clientId, clientSecret)
-
-}
+case class ClientCredentials(id: String, secret: String)

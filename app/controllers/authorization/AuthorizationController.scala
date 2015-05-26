@@ -71,7 +71,8 @@ object AuthorizationController extends Controller {
           Logger.debug(s"Registered key ${client} for user ${user}")
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
             "user" -> user,
-            "key" -> client)
+            "id" -> client.id,
+            "secret" -> client.secret)
         })
   }
 
