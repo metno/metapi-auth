@@ -22,7 +22,7 @@ javaOptions += "-Djunit.outdir=target/test-report"
 
 ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := true
 
-ScoverageSbtPlugin.ScoverageKeys.coverageMinimum := 98
+ScoverageSbtPlugin.ScoverageKeys.coverageMinimum := 95
 
 ScoverageSbtPlugin.ScoverageKeys.coverageFailOnMinimum := true
 

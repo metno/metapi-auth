@@ -17,3 +17,4 @@ conf/development.conf
 /lib
 development.conf
 *~
+/bin/

@@ -125,18 +125,49 @@ object Authorization {
     }
   }
 
+  @throws[Exception]("If unable to access database, or not authenticated")
+  private def identify(clientId: String): Try[Long] = Try {
+    DB.withConnection("authorization") { implicit conn =>
+      val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={id}::uuid AND active='true'")
+        .on("id" -> clientId)
+        .apply() map {
+          row =>
+            row[Long]("owner_id")
+        }
+      result.size match {
+        case 0 => throw new NoSuchElementException(s"Unsuccessful authentication attempt with client_id ${clientId}")
+        case 1 => result(0)
+        case _ => throw new NoSuchElementException(s"Several existing clients share the same id: ${clientId}")
+      }
+    }
+  }
+
+  /**
+   * Check basic authorization
+   */
+  def validateBasicAuth(token: String): Boolean = {
+    val id = BasicAuth.parse(token)
+    identify(BasicAuth.parse(token)) match {
+      case scala.util.Success(id) => true
+      case Failure(x) => false
+    }
+  }
+
   /**
    * Check if the given Authorization string is valid.
    *
    * @param authorization string, as it should look as parameter to http header Authorization
    */
-  def validateAuthorization(token: String): Boolean = {
+  def validateAuthorization(credentials: String): Boolean = {
 
-    if (token.startsWith("Bearer ")) {
+    if (credentials.startsWith("Bearer ")) {
       val tokenIdentifierLength = 7 // "Bearer ".size
-      validateBearerToken(token.substring(tokenIdentifierLength).trim())
+      validateBearerToken(credentials.substring(tokenIdentifierLength).trim())
+    } else if (credentials.startsWith("Basic ")) {
+      val basicIdentifierLength = 6 // "Basic ".size
+      validateBasicAuth(credentials.substring(basicIdentifierLength).trim())
     } else {
-      Logger.debug("Rejecting provided authorization token: " + token)
+      Logger.debug("Rejecting provided authorization token: " + credentials)
       false
     }
   }

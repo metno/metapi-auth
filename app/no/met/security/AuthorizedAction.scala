@@ -25,6 +25,7 @@
 
 package no.met.security
 
+import play.api._
 import play.api.mvc._
 import play.api.Mode
 import play.api.Play.current
@@ -44,8 +45,8 @@ object AuthorizedAction extends ActionBuilder[Request] with ActionFilter[Request
   private def authorize[A](request: Request[A]) = {
     request.headers.get("Authorization") match {
       case Some(x) if (Authorization.validateAuthorization(x)) => None
-      case Some(_) => Some(Results.Unauthorized("Unrecognized authentication token\n"))
-      case None => Some(Results.Unauthorized("Missing authentication token\n"))
+      case Some(_) => Some(Results.Unauthorized("Unrecognized authentication token\n").withHeaders(("WWW-Authenticate","Basic realm=\"METAPI\"")))
+      case None => Some(Results.Unauthorized("Missing authentication token\n").withHeaders(("WWW-Authenticate","Basic realm=\"METAPI\"")))
     }
   }
 
