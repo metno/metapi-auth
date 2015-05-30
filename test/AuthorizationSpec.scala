@@ -60,8 +60,16 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
 
     "authenticate previously created keys" in
       running(TestUtil.app) {
-        val client = Authorization.newClient("someone@met.no")
-        Authorization.authorized(AccessTokenRequest("client_credentials", client.id, client.secret)) must not beFailedTry
+        val clientA = Authorization.newClient("someone@met.no")
+        val clientB = Authorization.newClient("someone@met.no")
+
+        clientA must !==(clientB)
+
+        val tokenB = AccessTokenRequest("client_credentials", clientB.id, clientB.secret)
+        val tokenA = AccessTokenRequest("client_credentials", clientA.id, clientA.secret)
+
+        Authorization.authorized(tokenB) must beSuccessfulTry
+        Authorization.authorized(tokenA) must beSuccessfulTry
       }
 
     "not authenticate random keys" in

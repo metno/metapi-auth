@@ -10,6 +10,7 @@ dist
 /out
 /.idea_modules
 /.classpath
+/.cache
 /.project
 /RUNNING_PID
 /.settings
@@ -17,4 +18,4 @@ conf/development.conf
 /lib
 development.conf
 *~
-/bin/
+/.eclipse_build/
