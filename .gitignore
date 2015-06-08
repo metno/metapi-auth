@@ -19,3 +19,4 @@ conf/development.conf
 development.conf
 *~
 /.eclipse_build/
+/bin/

@@ -26,6 +26,7 @@
 package controllers.authorization
 
 import play.api._
+import play.api.Play.current
 import play.api.mvc._
 import util._
 import no.met.security._
@@ -67,9 +68,56 @@ object AuthorizationController extends Controller {
           BadRequest(views.html.requestCredentials(formWithErrors)) //"You need to provide a valid email address to get a key - please try again")
         },
         user => {
+
+          /**
+           * Returns the string held by a Try[String] instance, or "" if the instance is not Success[String].
+           */
+          def tryInstToString(r: scala.util.Try[String]) : String = {
+            r match {
+              case scala.util.Success(s) => s
+              case _ => ""
+            }
+          }
+
+          /**
+           * Returns server (i.e. <host>:<port> or just <host>) from config if found. Otherwise, if the app runs in
+           * TEST or DEV mode, "localhost" is returned, and in PROD mode, an internal server error (500) is propagated.
+           */
+          def getServer: String = {
+
+            var host = ""
+
+            if (play.api.Play.isProd(play.api.Play.current)) { // PROD mode
+              host = current.configuration.getString("service.host").get // fail and propagate internal server error (500) if absent
+            } else { // DEV or TEST mode
+              host = tryInstToString(scala.util.Try(current.configuration.getString("service.host").get)) match {
+                case "" => "localhost"
+                case s => s
+              }
+            }
+
+            val port = tryInstToString(scala.util.Try(current.configuration.getString("service.port").get))
+
+            def validPort(s: String): Boolean = { // returns true iff s can be converted to a valid port number
+              scala.util.Try(s.toInt) match {
+                case scala.util.Success(x) => (x >= 0) && (x <= 65535)
+                case _ => false
+              }
+            }
+
+            if (validPort(port)) s"$host:$port" else host
+          }
+
+          /**
+           * Returns path prefix from config if found, otherwise an empty string
+           */
+          def getPathPrefix: String = tryInstToString(scala.util.Try(current.configuration.getString("service.pathPrefix").get))
+
           val client = Authorization.newClient(user)
           Logger.debug(s"Registered key ${client} for user ${user}")
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
+            "server" -> getServer,
+            "pathPrefix" -> getPathPrefix,
             "user" -> user,
             "id" -> client.id,
             "secret" -> client.secret)
