@@ -70,54 +70,51 @@ object AuthorizationController extends Controller {
         user => {
 
           /**
-           * Returns the string held by a Try[String] instance, or "" if the instance is not Success[String].
+           * Returns a map that contains scheme, server, and pathPrefix derived from the service.* values in the configuration as follows:
+           *
+           *   - scheme: service.scheme, defaulting to https in PROD mode and to http in DEV/TEST mode.
+           *   - server: service.host:service.port if service.port is a valid port number, otherwise service.host.
+           *             If service.host is missing in PROD mode, an exception is thrown. In DEV/TEST mode, service.host defaults to localhost.
+           *   - pathPrefix: service.pathPrefix, defaulting to "".
            */
-          def tryInstToString(r: scala.util.Try[String]) : String = {
-            r match {
-              case scala.util.Success(s) => s
-              case _ => ""
-            }
-          }
+          def getServiceConf: Map[String, String] = {
 
-          /**
-           * Returns server (i.e. <host>:<port> or just <host>) from config if found. Otherwise, if the app runs in
-           * TEST or DEV mode, "localhost" is returned, and in PROD mode, an internal server error (500) is propagated.
-           */
-          def getServer: String = {
-
+            var scheme = ""
             var host = ""
 
             if (play.api.Play.isProd(play.api.Play.current)) { // PROD mode
+              scheme = current.configuration.getString("service.scheme") getOrElse "https"
               host = current.configuration.getString("service.host").get // fail and propagate internal server error (500) if absent
             } else { // DEV or TEST mode
-              host = tryInstToString(scala.util.Try(current.configuration.getString("service.host").get)) match {
-                case "" => "localhost"
-                case s => s
-              }
+              scheme = current.configuration.getString("service.scheme") getOrElse "http"
+              host = current.configuration.getString("service.host") getOrElse "localhost"
             }
-
-            val port = tryInstToString(scala.util.Try(current.configuration.getString("service.port").get))
 
             def validPort(s: String): Boolean = { // returns true iff s can be converted to a valid port number
               scala.util.Try(s.toInt) match {
                 case scala.util.Success(x) => (x >= 0) && (x <= 65535)
-                case _ => false
+                case _                     => false
               }
             }
 
-            if (validPort(port)) s"$host:$port" else host
+            Map(
+              "scheme" -> scheme,
+              "server" -> {
+                (current.configuration.getString("service.port") getOrElse "") match {
+                  case port if (validPort(port)) => s"$host:$port"
+                  case _                         => host
+                }
+              },
+              "pathPrefix" -> (current.configuration.getString("service.pathPrefix") getOrElse ""))
           }
-
-          /**
-           * Returns path prefix from config if found, otherwise an empty string
-           */
-          def getPathPrefix: String = tryInstToString(scala.util.Try(current.configuration.getString("service.pathPrefix").get))
 
           val client = Authorization.newClient(user)
           Logger.debug(s"Registered key ${client} for user ${user}")
+          val serviceConf = getServiceConf
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
-            "server" -> getServer,
-            "pathPrefix" -> getPathPrefix,
+            "scheme" -> serviceConf("scheme"),
+            "server" -> serviceConf("server"),
+            "pathPrefix" -> serviceConf("pathPrefix"),
             "user" -> user,
             "id" -> client.id,
             "secret" -> client.secret)
