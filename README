@@ -4,6 +4,20 @@ Oauth2 support for metapi
 Provides oauth2 Client Credentials flow for metapi
 
 
+Testing
+-------
+
+When not in production mode you can use the following hardcoded client_id for authentication:
+
+  cafebabe-feed-d00d-badd-5eaf00d5a1ad
+
+Add the following lines to your development.conf:
+
+  # Set to developer mode
+  application.mode=DEV
+
+Replace DEV with TEST for integration testing
+
 Using an on-disk database
 -------------------------
 
