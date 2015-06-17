@@ -66,7 +66,7 @@ object Authorization {
 
   @throws[Exception]("If unable to access database, or not authenticated")
   private def authenticate(client: ClientCredentials): Long = {
-	val testEmail = if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
+    val testEmail = if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
     DB.withConnection("authorization") { implicit conn =>
       val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={id}::uuid AND client_secret={secret}::uuid AND active='true' AND email <> {email}")
         .on("id" -> client.id, "secret" -> client.secret, "email" -> testEmail)
