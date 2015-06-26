@@ -31,6 +31,7 @@ import play.api.Mode
 import play.api.Play.current
 import scala.concurrent.Future
 import no.met.security._
+import no.met.data._
 import scala.util._
 
 /**
@@ -45,22 +46,20 @@ object AuthorizedAction extends ActionBuilder[Request] with ActionFilter[Request
   private def authorize[A](request: Request[A]) = {
     request.headers.get("Authorization") match {
       case Some(x) if (Authorization.validateAuthorization(x)) => None
-      case Some(_) => Some(Results.Unauthorized("Unrecognized authentication token\n").withHeaders(("WWW-Authenticate","Basic realm=\"METAPI\"")))
-      case None => Some(Results.Unauthorized("Missing authentication token\n").withHeaders(("WWW-Authenticate","Basic realm=\"METAPI\"")))
+      case Some(_) => throw new UnauthorizedException("Unrecognized authentication token")
+      case None => throw new UnauthorizedException("Missing authentication token")
     }
   }
 
-  private def shouldSkipAuthorization(): Boolean = {
+  private def shouldSkipAuthorization: Boolean = {
     Seq(Mode.Dev, Mode.Test).contains(current.mode) && current.configuration.getBoolean("auth.active") == Some(false)
   }
 
   override def filter[A](request: Request[A]) = Future.successful { // scalastyle:ignore public.methods.have.type
-    Try {
-      shouldSkipAuthorization()
-    } match {
-      case Success(false) => authorize(request)
-      case Success(true) => None
-      case Failure(x) => Some(Results.InternalServerError("Internal error"))
+    if (!shouldSkipAuthorization) {
+      authorize(request)
+    } else {
+      None
     }
   }
 }

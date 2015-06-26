@@ -29,6 +29,7 @@ import play.api._
 import play.api.Play.current
 import play.api.mvc._
 import util._
+import no.met.data._
 import no.met.security._
 import play.api.data._
 import play.api.data.Forms._
@@ -69,48 +70,9 @@ object AuthorizationController extends Controller {
         },
         user => {
 
-          /**
-           * Returns a map that contains scheme, server, and pathPrefix derived from the service.* values in the configuration as follows:
-           *
-           *   - scheme: service.scheme, defaulting to https in PROD mode and to http in DEV/TEST mode.
-           *   - server: service.host:service.port if service.port is a valid port number, otherwise service.host.
-           *             If service.host is missing in PROD mode, an exception is thrown. In DEV/TEST mode, service.host defaults to localhost.
-           *   - pathPrefix: service.pathPrefix, defaulting to "".
-           */
-          def getServiceConf: Map[String, String] = {
-
-            var scheme = ""
-            var host = ""
-
-            if (play.api.Play.isProd(play.api.Play.current)) { // PROD mode
-              scheme = current.configuration.getString("service.scheme") getOrElse "https"
-              host = current.configuration.getString("service.host").get // fail and propagate internal server error (500) if absent
-            } else { // DEV or TEST mode
-              scheme = current.configuration.getString("service.scheme") getOrElse "http"
-              host = current.configuration.getString("service.host") getOrElse "localhost"
-            }
-
-            def validPort(s: String): Boolean = { // returns true iff s can be converted to a valid port number
-              scala.util.Try(s.toInt) match {
-                case scala.util.Success(x) => (x >= 0) && (x <= 65535)
-                case _                     => false
-              }
-            }
-
-            Map(
-              "scheme" -> scheme,
-              "server" -> {
-                (current.configuration.getString("service.port") getOrElse "") match {
-                  case port if (validPort(port)) => s"$host:$port"
-                  case _                         => host
-                }
-              },
-              "pathPrefix" -> (current.configuration.getString("service.pathPrefix") getOrElse ""))
-          }
-
           val client = Authorization.newClient(user)
           Logger.debug(s"Registered key ${client} for user ${user}")
-          val serviceConf = getServiceConf
+          val serviceConf = ConfigUtil.serviceConf
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
             "scheme" -> serviceConf("scheme"),
             "server" -> serviceConf("server"),
@@ -136,14 +98,13 @@ object AuthorizationController extends Controller {
   def requestAccessToken = Action {
     implicit request =>
       accessTokenRequestForm.bindFromRequest.fold(
-        errors => BadRequest("Invalid input\n"),
+        errors => throw new BadRequestException("Invalid input"),
         validRequest => {
           Authorization.generateBearerToken(validRequest) match {
             case Success(key) =>
               Ok(Json.obj("access_token" -> key))
             case Failure(x) => {
-              Logger.debug(x.getMessage)
-              Unauthorized("Invalid credentials\n")
+              throw new UnauthorizedException("Invalid credentials")
             }
           }
         })

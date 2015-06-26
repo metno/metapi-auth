@@ -29,6 +29,7 @@ import org.junit.runner._
 import play.api.test._
 import play.api.test.Helpers._
 import no.met.security._
+import no.met.data._
 import play.api.http.HeaderNames
 import play.api.mvc.AnyContentAsFormUrlEncoded
 import net.sf.ehcache.config.Configuration
@@ -64,8 +65,7 @@ class ApplicationSpec extends Specification {
     "disallow requests to secure pages with missing authentication token" in
       running(TestUtil.app) {
         val secret = route(FakeRequest(GET, "/secret.html")).get
-        status(secret) must equalTo(UNAUTHORIZED)
-        contentAsString(secret) must not contain ("Don't tell")
+        status(secret) must throwA[UnauthorizedException]
       }
 
     "show token creation page" in
@@ -124,7 +124,7 @@ class ApplicationSpec extends Specification {
     "send unauthorized when sending rubbish request for bearer token" in
       running(TestUtil.app) {
         val result = route(FakeRequest(POST, "/requestAccessToken").withFormUrlEncodedBody("whatever" -> "rubbish")).get
-        status(result) must equalTo(BAD_REQUEST)
+        status(result) must throwA[BadRequestException]
       }
 
     "deliver different credentials to different users" in
@@ -141,7 +141,7 @@ class ApplicationSpec extends Specification {
         contentAsString(secret) must contain("Don't tell")
       }
 
-    "deny access when presented with valid access token" in
+    "deny access when presented with invalid access token" in
       running(TestUtil.app) {
         val body = AnyContentAsFormUrlEncoded(
           Map("grant_type" -> List("client_credentials"),
@@ -149,7 +149,7 @@ class ApplicationSpec extends Specification {
             "client_secret" -> List("asgs")))
 
         val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
-        status(result) must equalTo(UNAUTHORIZED)
+        status(result) must throwA[UnauthorizedException]
       }
 
     "allow access multiple spaces in bearer token" in
@@ -165,8 +165,7 @@ class ApplicationSpec extends Specification {
       running(TestUtil.app) {
         val headers = FakeHeaders(List("Authorization" -> List("Bearer invalidCredentials")))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-        status(secret) must equalTo(UNAUTHORIZED)
-        contentAsString(secret) must not contain ("Don't tell")
+        status(secret) must throwA[UnauthorizedException]
       }
 
     "allow requests to secure pages with missing authentication token if turned off in config" in
@@ -181,16 +180,14 @@ class ApplicationSpec extends Specification {
       running(TestUtil.app("auth.active" -> true)) {
 
         val secret = route(FakeRequest(GET, "/secret.html")).get
-        status(secret) must equalTo(UNAUTHORIZED)
-        contentAsString(secret) must not contain ("Don't tell")
+        status(secret) must throwA[UnauthorizedException]
       }
 
     "Give error when authorization config is weird" in
       running(TestUtil.app("auth.active" -> "koko?")) {
 
         val secret = route(FakeRequest(GET, "/secret.html")).get
-        status(secret) must equalTo(INTERNAL_SERVER_ERROR)
-        contentAsString(secret) must not contain ("Don't tell")
+        status(secret) must throwA[Exception]
       }
 
   }

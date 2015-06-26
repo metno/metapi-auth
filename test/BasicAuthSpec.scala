@@ -58,7 +58,7 @@ class BasicAuthSpec extends Specification {
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> List(s"basic $encoded")))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-        status(secret) must equalTo(401)
+        status(secret) must throwA[UnauthorizedException]
       }
 
     "should reject case-insensitive type (ALL CAPS)" in
@@ -68,7 +68,7 @@ class BasicAuthSpec extends Specification {
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> List(s"BASIC $encoded")))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-        status(secret) must equalTo(401)
+        status(secret) must throwA[UnauthorizedException]
       }
 
     "should reject case-insensitive type (vArIED CAse)" in
@@ -78,7 +78,7 @@ class BasicAuthSpec extends Specification {
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> List(s"bASiC $encoded")))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-        status(secret) must equalTo(401)
+        status(secret) must throwA[UnauthorizedException]
       }
 
     "should ignore passphrase of credentials" in
@@ -96,7 +96,7 @@ class BasicAuthSpec extends Specification {
       running(TestUtil.app) {
         val headers = FakeHeaders(List("Authorization" -> List(s"Basic fake-client-id")))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
-        status(secret) must equalTo(401)
+        status(secret) must throwA[UnauthorizedException]
       }
 
   }

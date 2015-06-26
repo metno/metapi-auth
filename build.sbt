@@ -37,6 +37,8 @@ ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := """
   views.html;
 """
 
+resolvers += "metno repo" at "http://maven.met.no/content/groups/public"
+
 libraryDependencies ++= Seq(
   jdbc,
   anorm,
@@ -44,5 +46,6 @@ libraryDependencies ++= Seq(
   ws,
  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
  "com.github.nscala-time" %% "nscala-time" % "1.8.0",
- "com.google.guava" % "guava" % "18.0"
+ "com.google.guava" % "guava" % "18.0",
+  "no.met" %% "metapi-util" % "0.1-SNAPSHOT"
 )
