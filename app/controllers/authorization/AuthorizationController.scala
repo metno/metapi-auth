@@ -25,21 +25,22 @@
 
 package controllers.authorization
 
-import play.api._
+import javax.inject.Inject
 import play.api.Play.current
-import play.api.mvc._
-import util._
-import no.met.data._
-import no.met.security._
+import play.api._
 import play.api.data._
 import play.api.data.Forms._
-import controllers._
-import no.met.security.AuthorizedAction
+import play.api.i18n._
 import play.api.libs.json._
+import play.api.mvc._
+import scala.util._
+import no.met.security._
+import no.met.security.AuthorizedAction
+import views._
 
 // scalastyle:off public.methods.have.type
 
-object AuthorizationController extends Controller {
+class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends Controller with I18nSupport {
 
   /**
    * Sample page to verify that authorization mechanism works
@@ -83,7 +84,6 @@ object AuthorizationController extends Controller {
         })
   }
 
-  // TODO: Rename to newClientCreated, or something
   def credentialsCreated() = Action {
     implicit request =>
       Ok(views.html.credentialsCreated())
@@ -98,13 +98,13 @@ object AuthorizationController extends Controller {
   def requestAccessToken = Action {
     implicit request =>
       accessTokenRequestForm.bindFromRequest.fold(
-        errors => throw new BadRequestException("Invalid input"),
+        errors => BadRequest("Invalid input\n"),
         validRequest => {
           Authorization.generateBearerToken(validRequest) match {
             case Success(key) =>
               Ok(Json.obj("access_token" -> key))
             case Failure(x) => {
-              throw new UnauthorizedException("Invalid credentials")
+              Unauthorized("Invalid credentials")
             }
           }
         })

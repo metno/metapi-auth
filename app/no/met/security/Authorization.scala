@@ -120,7 +120,6 @@ object Authorization {
       case scala.util.Success(bearerToken) =>
         bearerToken.isValid
       case Failure(x) => {
-        Logger.debug(x.getMessage)
         false
       }
     }
@@ -169,7 +168,6 @@ object Authorization {
       val basicIdentifierLength = 6 // "Basic ".size
       validateBasicAuth(credentials.substring(basicIdentifierLength).trim())
     } else {
-      Logger.debug("Rejecting provided authorization token: " + credentials)
       false
     }
   }

@@ -83,7 +83,7 @@ case class BearerToken(userId: Long, expires: DateTime) {
 
 object BearerToken {
 
-  private val encoding = BaseEncoding.base64Url()
+  private lazy val encoding = BaseEncoding.base64Url()
 
   /**
    * Create a new token, that expires after the given time
@@ -110,7 +110,6 @@ object BearerToken {
   }
 
   private def parsePayload(payload: String): BearerToken = {
-
     val data = encoding.decode(payload)
     val userId = ByteBuffer.wrap(data, 0, Longs.BYTES).getLong()
     val expirationTime = ByteBuffer.wrap(data, Longs.BYTES, Longs.BYTES).getLong()
@@ -121,18 +120,16 @@ object BearerToken {
     token
   }
 
-  private val encryptionKey: Array[Byte] = {
-
+  private lazy val encryptionKey: Array[Byte] = {
     // TODO: Revise this
-
-    val key = current.configuration.getString("application.secret").get
+    val key = current.configuration.getString("play.crypto.secret").get
     val keyLength = 32
     key.substring(0, keyLength).getBytes
   }
 
-  private val messageDigest = MessageDigest.getInstance("MD5")
+  private lazy val messageDigest = MessageDigest.getInstance("MD5")
 
-  private val cipher: Cipher = {
+  private lazy val cipher: Cipher = {
     val encryptionMethod = "AES"
     val cipher = Cipher.getInstance(encryptionMethod)
     val key = new SecretKeySpec(encryptionKey, encryptionMethod)

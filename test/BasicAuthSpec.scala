@@ -45,7 +45,7 @@ class BasicAuthSpec extends Specification {
         val credentials = Authorization.newClient("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
-        val headers = FakeHeaders(List("Authorization" -> List(s"Basic $encoded")))
+        val headers = FakeHeaders(List("Authorization" -> s"Basic $encoded"))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must equalTo(OK)
         contentAsString(secret) must contain("Don't tell")
@@ -56,7 +56,7 @@ class BasicAuthSpec extends Specification {
         val credentials = Authorization.newClient("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
-        val headers = FakeHeaders(List("Authorization" -> List(s"basic $encoded")))
+        val headers = FakeHeaders(List("Authorization" -> s"basic $encoded"))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must throwA[UnauthorizedException]
       }
@@ -66,7 +66,7 @@ class BasicAuthSpec extends Specification {
         val credentials = Authorization.newClient("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
-        val headers = FakeHeaders(List("Authorization" -> List(s"BASIC $encoded")))
+        val headers = FakeHeaders(List("Authorization" -> s"BASIC $encoded"))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must throwA[UnauthorizedException]
       }
@@ -76,7 +76,7 @@ class BasicAuthSpec extends Specification {
         val credentials = Authorization.newClient("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
-        val headers = FakeHeaders(List("Authorization" -> List(s"bASiC $encoded")))
+        val headers = FakeHeaders(List("Authorization" -> s"bASiC $encoded"))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must throwA[UnauthorizedException]
       }
@@ -86,7 +86,7 @@ class BasicAuthSpec extends Specification {
         val credentials = Authorization.newClient("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:DUMMY-PASSWORD".getBytes("UTF-8"))
-        val headers = FakeHeaders(List("Authorization" -> List(s"Basic $encoded")))
+        val headers = FakeHeaders(List("Authorization" -> s"Basic $encoded"))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must equalTo(OK)
         contentAsString(secret) must contain("Don't tell")
@@ -94,7 +94,7 @@ class BasicAuthSpec extends Specification {
 
     "reject an invalid client_id" in
       running(TestUtil.app) {
-        val headers = FakeHeaders(List("Authorization" -> List(s"Basic fake-client-id")))
+        val headers = FakeHeaders(List("Authorization" -> s"Basic fake-client-id"))
         val secret = route(FakeRequest(GET, "/secret.html", headers, "")).get
         status(secret) must throwA[UnauthorizedException]
       }

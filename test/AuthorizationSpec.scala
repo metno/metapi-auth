@@ -25,8 +25,6 @@
 
 import org.specs2.mutable._
 import org.specs2.runner._
-import org.specs2.time.NoDurationConversions
-import org.specs2.time.NoTimeConversions
 import org.junit.runner._
 import play.api.test._
 import play.api.test.Helpers._
@@ -34,7 +32,7 @@ import com.github.nscala_time.time.Imports._
 import no.met.security._
 
 @RunWith(classOf[JUnitRunner])
-class AuthorizationSpec extends Specification with NoTimeConversions {
+class AuthorizationSpec extends Specification {
 
   "Authorization object" should {
     "create authorization keys" in
@@ -113,6 +111,12 @@ class AuthorizationSpec extends Specification with NoTimeConversions {
       running(TestUtil.app) {
         val token = getBearerToken()
         Authorization.validateBearerToken(token) must beTrue
+      }
+
+    "not validate expired tokens" in
+      running(TestUtil.app) {
+        val encoded = new BearerToken(0, DateTime.yesterday).encoded
+        Authorization.validateBearerToken(encoded) must beFalse
       }
 
     "accept Authorization request with bearer token" in

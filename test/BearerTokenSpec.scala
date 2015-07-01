@@ -26,9 +26,9 @@
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
-import scala.util._
 import play.api.test._
 import play.api.test.Helpers._
+import scala.util._
 import no.met.security._
 import com.github.nscala_time.time.Imports._
 
@@ -44,12 +44,14 @@ class BearerTokenSpec extends Specification {
 
     "be encodeable" in
       running(TestUtil.app) {
-        createToken().encoded must not beEmpty
+        lazy val token = createToken()
+
+        token.encoded must not beEmpty
       }
 
     "isValid must give correct answer" in
       running(TestUtil.app) {
-        val token = createToken(100)
+        lazy val token = createToken(100)
         token.isValid must beTrue
         Thread.sleep(100)
         token.isValid must beFalse

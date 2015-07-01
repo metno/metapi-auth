@@ -2,14 +2,16 @@
 # This file defines all AuthorizationController routes (Higher priority routes first)
 # ~~~~
 
-# Allow checking authorization status
-GET     /secret.html         controllers.authorization.AuthorizationController.secret
-
+# Credentials
 GET     /requestCredentials.html   controllers.authorization.AuthorizationController.requestCredentialsPage
 POST    /requestCredentials.html   controllers.authorization.AuthorizationController.newCredentialsRequest
 GET     /credentialsCreated.html   controllers.authorization.AuthorizationController.credentialsCreated
 
+# OAuth2 token request
 POST    /requestAccessToken controllers.authorization.AuthorizationController.requestAccessToken
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file        controllers.Assets.at(path="/public", file)
+
+# Test endpoint for checking authorization status
+GET     /secret.html         controllers.authorization.AuthorizationController.secret

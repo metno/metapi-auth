@@ -28,11 +28,16 @@ import play.api.test.Helpers
 
 object TestUtil {
 
-  def app: FakeApplication = FakeApplication(additionalConfiguration = Helpers.inMemoryDatabase("authorization"))
+  private def defaultConfig = {
+    val routeConfig = "play.http.router" -> "authorization.Routes";
+    Helpers.inMemoryDatabase("authorization") + routeConfig
+  }
+
+  def app: FakeApplication = FakeApplication(additionalConfiguration = defaultConfig)
 
   def app(additionalConfig: (String, Any)): FakeApplication =
-    FakeApplication(additionalConfiguration = Helpers.inMemoryDatabase("authorization") + additionalConfig)
+    FakeApplication(additionalConfiguration = defaultConfig + additionalConfig)
 
   def app(additionalConfig: Seq[(String, Any)]): FakeApplication =
-    FakeApplication(additionalConfiguration = Helpers.inMemoryDatabase("authorization") ++ additionalConfig)
+    FakeApplication(additionalConfiguration = defaultConfig ++ additionalConfig)
 }
