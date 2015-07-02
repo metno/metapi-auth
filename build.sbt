@@ -50,6 +50,7 @@ libraryDependencies ++= Seq(
  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
  "com.github.nscala-time" %% "nscala-time" % "2.0.0",
  "com.google.guava" % "guava" % "18.0",
+ "no.met.data" %% "util" % "0.2-SNAPSHOT",
   specs2 % Test
 )
 
