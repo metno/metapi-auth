@@ -30,6 +30,7 @@ import scala.util._
 import java.security._
 import java.nio.ByteBuffer
 import com.google.common.io._
+import no.met.security.UnauthorizedException
 
 object BasicAuth {
   private val encoding = BaseEncoding.base64Url()
@@ -38,8 +39,13 @@ object BasicAuth {
     val data = encoding.decode(auth)
     val dataStr = new String(data, "UTF-8")
     val credentials = dataStr.split(":")
-    // We are only interested in the userId; password is discarded
-    credentials(0)
+    if (credentials.size > 0) {
+      // We are only interested in the userId; password is discarded
+      credentials(0)
+    }
+    else {
+      throw new UnauthorizedException("Missing client ID in the request")
+    }
   }
 
 }

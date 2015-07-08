@@ -38,6 +38,36 @@ import com.google.common.io._
 @RunWith(classOf[JUnitRunner])
 class BasicAuthSpec extends Specification {
 
+
+  "BasicAuth object" should {
+
+    "return the username of the credentials" in {
+        val encoded = BaseEncoding.base64Url().encode("MyUserName:MyPassword".getBytes("UTF-8"))
+        BasicAuth.parse(encoded) mustEqual("MyUserName")
+    }
+
+    "ignore missing passphrase" in {
+        val encoded = BaseEncoding.base64Url().encode("MyUserName:".getBytes("UTF-8"))
+        BasicAuth.parse(encoded) mustEqual("MyUserName")
+    }
+
+    "handle username without punctuation" in {
+        val encoded = BaseEncoding.base64Url().encode("MyUserName".getBytes("UTF-8"))
+        BasicAuth.parse(encoded) mustEqual("MyUserName")
+    }
+
+    "handle empty username and passphrase" in {
+        val encoded = BaseEncoding.base64Url().encode(":".getBytes("UTF-8"))
+        BasicAuth.parse(encoded) must throwA[UnauthorizedException]
+    }
+
+    "handle an empty string" in {
+        val encoded = BaseEncoding.base64Url().encode("".getBytes("UTF-8"))
+        BasicAuth.parse(encoded) mustEqual("") // throwA[UnauthorizedException]
+    }
+
+  }
+
   "BasicAuth" should {
 
     "identify a valid client_id" in
@@ -100,6 +130,8 @@ class BasicAuthSpec extends Specification {
       }
 
   }
+
+
 }
 
 // scalastyle:on
