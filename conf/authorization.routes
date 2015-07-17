@@ -15,3 +15,6 @@ GET     /assets/*file        controllers.Assets.at(path="/public", file)
 
 # Test endpoint for checking authorization status
 GET     /secret.html         controllers.authorization.AuthorizationController.secret
+
+# Clear cached client_id in browser
+GET     /logout.html         controllers.authorization.AuthorizationController.logout

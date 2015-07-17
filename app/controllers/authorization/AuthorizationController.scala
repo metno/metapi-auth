@@ -48,6 +48,11 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
     Ok("Don't tell\n")
   }
 
+  def logout = Action {
+    implicit request =>
+      throw new UnauthorizedException("Credentials invalidated")
+  }
+
   private val credentialsRequestForm = Form(single("email" -> email))
 
   /**
