@@ -1,46 +1,22 @@
-name := """auth"""
-
 organization := "no.met.data"
-
+name := """auth"""
 version := "0.2-SNAPSHOT"
+description := "Basic authorization module used by the metapi."
+homepage :=  Some(url(s"https://github.com/metno"))
+licenses += "GPL-2.0" -> url("https://www.gnu.org/licenses/gpl-2.0.html")
 
-publishTo := {
-  val nexus = "http://maven.met.no/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-}
-
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-
+// Scala settings
+// ----------------------------------------------------------------------
+scalaVersion := "2.11.8"
+scalacOptions ++= Seq("-deprecation", "-feature")
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.6"
-
+// Play settings
+// ----------------------------------------------------------------------
 PlayKeys.devSettings += ("play.http.router", "authorization.Routes")
 
-
-// Test Settings
-javaOptions += "-Djunit.outdir=target/test-report"
-
-ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := true
-
-ScoverageSbtPlugin.ScoverageKeys.coverageMinimum := 95
-
-ScoverageSbtPlugin.ScoverageKeys.coverageFailOnMinimum := true
-
-ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := """
-  <empty>;
-  value.ApiResponse;
-  ReverseApplication;
-  ReverseAssets;
-  authorization.Routes;
-  views.html;
-"""
-
-
 // Dependencies
+// ----------------------------------------------------------------------
 libraryDependencies ++= Seq(
   jdbc,
   cache,
@@ -54,8 +30,49 @@ libraryDependencies ++= Seq(
   specs2 % Test
 )
 
-resolvers ++= Seq( "metno repo" at "http://maven.met.no/content/groups/public",
-                   "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases" )
+resolvers ++= Seq(
+  "OJO Artifactory" at "http://oss.jfrog.org/artifactory/oss-snapshot-local",
+  "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+)
+
+// Publish Settings
+// ----------------------------------------------------------------------
+publishTo := {
+  val jfrog = "https://oss.jfrog.org/artifactory/"
+  if (isSnapshot.value)
+    Some("Artifactory Realm" at jfrog + "oss-snapshot-local;build.timestamp=" + new java.util.Date().getTime)
+  else
+    Some("Artifactory Realm" at jfrog + "oss-release-local")
+}
+pomExtra := (
+  <scm>
+    <url>https://github.com/metno/metapi-{name.value}.git</url>
+    <connection>scm:git:git@github.com:metno/metapi-{name.value}.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>metno</id>
+      <name>Meteorological Institute, Norway</name>
+      <url>http://www.github.com/metno</url>
+    </developer>
+  </developers>)
+bintrayReleaseOnPublish := false
+publishArtifact in Test := false
+
+// Testing
+// ----------------------------------------------------------------------
+javaOptions += "-Djunit.outdir=target/test-report"
+coverageHighlighting := true
+coverageMinimum := 95
+coverageFailOnMinimum := true
+coverageExcludedPackages := """
+  <empty>;
+  value.ApiResponse;
+  ReverseApplication;
+  ReverseAssets;
+  authorization.Routes;
+  views.html;
+"""
 
 // Play provides two styles of routers, one expects its actions to be injected, the
 // other, legacy style, accesses its actions statically.

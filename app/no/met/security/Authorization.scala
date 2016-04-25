@@ -32,6 +32,7 @@ import play.api.db._
 import java.util.UUID
 import java.sql.SQLException
 import scala.util._
+import scala.language.postfixOps
 import com.github.nscala_time.time.Imports._
 
 /**

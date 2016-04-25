@@ -30,7 +30,6 @@ import scala.util._
 import java.security._
 import java.nio.ByteBuffer
 import com.google.common.io._
-import no.met.security.UnauthorizedException
 
 object BasicAuth {
   private val encoding = BaseEncoding.base64Url()
