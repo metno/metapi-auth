@@ -26,20 +26,28 @@
 package no.met.security
 
 import play.api.Play.current
-import play.api._
-import anorm._
 import play.api.db._
+import anorm._
+import anorm.SqlParser._
+import com.github.nscala_time.time.Imports._
 import java.util.UUID
 import java.sql.SQLException
-import scala.util._
 import scala.language.postfixOps
-import com.github.nscala_time.time.Imports._
+import scala.util._
 
 /**
  * Functionality for creating and verifying unique keys for identifying users.
  */
 object Authorization {
 
+  case class Owner(id: Long)
+  
+  val parser: RowParser[Owner] = {
+    get[Long]("owner_id") map {
+      case owner_id => Owner(owner_id)
+    }
+  }  
+  
   private def createUniqueKey() = UUID.randomUUID
   private implicit def uuidToStatement = new ToStatement[UUID] {
     def set(s: java.sql.PreparedStatement, index: Int, aValue: UUID): Unit = s.setObject(index, aValue)
@@ -69,15 +77,12 @@ object Authorization {
   private def authenticate(client: ClientCredentials): Long = {
     val testEmail = if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
     DB.withConnection("authorization") { implicit conn =>
-      val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={id}::uuid AND client_secret={secret}::uuid AND active='true' AND email <> {email}")
+      val result = SQL("SELECT owner_id, client_id FROM authorized_keys WHERE client_id={id}::uuid AND client_secret={secret}::uuid AND active='true' AND email <> {email}")
         .on("id" -> client.id, "secret" -> client.secret, "email" -> testEmail)
-        .apply() map {
-          row =>
-            row[Long]("owner_id")
-        }
+        .as( parser * )
       result.size match {
         case 0 => throw new NoSuchElementException(s"Unsuccessful authentication attempt with client_id ${client.id}")
-        case 1 => result(0)
+        case 1 => result(0).id
         case _ => throw new NoSuchElementException(s"Several existing clients share the same id: ${client.id}")
       }
     }
@@ -132,13 +137,10 @@ object Authorization {
     DB.withConnection("authorization") { implicit conn =>
       val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={id}::uuid AND active='true' AND email <> {email}")
         .on("id" -> clientId, "email" -> testEmail)
-        .apply() map {
-          row =>
-            row[Long]("owner_id")
-        }
+        .as( parser * )
       result.size match {
         case 0 => throw new NoSuchElementException(s"Unsuccessful authentication attempt with client_id ${clientId}")
-        case 1 => result(0)
+        case 1 => result(0).id
         case _ => throw new NoSuchElementException(s"Several existing clients share the same id: ${clientId}")
       }
     }
