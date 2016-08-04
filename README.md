@@ -22,17 +22,20 @@ Using an on-disk database
 -------------------------
 
 By default, this installation uses an in-memory database. For
-production and sometimes testing this is not really useful. In order
-to use a postgresql database create a file, conf/auth.conf, and
-populate it with something like this:
+production and sometimes testing this is not really useful.
 
-db.authorization.driver=org.postgresql.Driver
-db.authorization.url="jdbc:postgresql:bora"
-db.authorization.user=bora
-db.authorization.password="password"
+In order to use a postgresql database for development, create a
+file, conf/development.conf, and add lines like these:
 
-Also make sure to create an empty database with the correct name
-before running the application.
+  db.authorization.driver = org.postgresql.Driver
+  db.authorization.url = "jdbc:postgresql://localhost:5432/authorization"
+  db.authorization.user = metapi
+  db.authorization.password = "password"
 
-JDBC driver for postgresql is included in dependencies, so you should
-not have to install that manually.
+Then create an empty database using createdb:
+
+  $ createdb authorization
+
+And create a user 'metapi' with a password of your choice for the metapi.
+  
+  $ createuser metapi -P
