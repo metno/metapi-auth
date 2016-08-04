@@ -76,7 +76,7 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
         user => {
 
           val client = Authorization.newClient(user)
-          Logger.debug(s"Registered key ${client} for user ${user}")
+          //Logger.debug(s"Registered key ${client} for user ${user}")
           val serviceConf = ConfigUtil.serviceConf
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
             "scheme" -> serviceConf("scheme"),
