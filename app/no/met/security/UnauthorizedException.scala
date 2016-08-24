@@ -25,17 +25,15 @@
 
 package no.met.security
 
-import no.met.data._
 import scala.util._
+import no.met.data._
 
 /**
  * Exception to be thrown when authentication fails
  */
 class UnauthorizedException(
-  message: String,
-  help: Option[String] = None) extends BadRequestException(
-  message, help, Seq("WWW-Authenticate" -> "Basic realm=\"METAPI\"")) {
+  reason: String,
+  help: Option[String] = None) extends BadRequestException(reason, help, Seq("WWW-Authenticate" -> "Basic realm=\"METAPI\"")) {
 
   override val code = 401 // scalastyle:ignore
-
 }

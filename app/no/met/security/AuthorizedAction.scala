@@ -30,9 +30,9 @@ import play.api.mvc._
 import play.api.Mode
 import play.api.Play.current
 import scala.concurrent.Future
+import scala.util._
 import no.met.security._
 import no.met.data._
-import scala.util._
 
 /**
  * Providing access only to users who provide a valid Authorization field in the http

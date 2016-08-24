@@ -50,7 +50,7 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
 
   def logout = Action {
     implicit request =>
-      throw new UnauthorizedException("Credentials invalidated")
+      throw new UnauthorizedException("Credentials have been invalidated.")
   }
 
   private val credentialsRequestForm = Form(single("email" -> email))
@@ -74,7 +74,6 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
           BadRequest(views.html.requestCredentials(formWithErrors)) //"You need to provide a valid email address to get a key - please try again")
         },
         user => {
-
           val client = Authorization.newClient(user)
           //Logger.debug(s"Registered key ${client} for user ${user}")
           val serviceConf = ConfigUtil.serviceConf
@@ -103,13 +102,13 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
   def requestAccessToken = Action {
     implicit request =>
       accessTokenRequestForm.bindFromRequest.fold(
-        errors => throw new BadRequestException("Invalid input"),
+        errors => throw new BadRequestException("Invalid input."),
         validRequest => {
           Authorization.generateBearerToken(validRequest) match {
             case Success(key) =>
               Ok(Json.obj("access_token" -> key))
             case Failure(x) => {
-              throw new UnauthorizedException("Invalid credentials")
+              throw new UnauthorizedException("Invalid credentials.")
             }
           }
         })

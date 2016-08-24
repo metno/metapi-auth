@@ -26,10 +26,11 @@
 package no.met.security
 
 import play.api.Play.current
-import scala.util._
+import com.github.nscala_time.time.Imports._
+import com.google.common.io._
 import java.security._
 import java.nio.ByteBuffer
-import com.google.common.io._
+import scala.util._
 
 object BasicAuth {
   private val encoding = BaseEncoding.base64Url()
