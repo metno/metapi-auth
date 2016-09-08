@@ -32,7 +32,6 @@ import play.api.Play.current
 import scala.concurrent.Future
 import scala.util._
 import no.met.security._
-import no.met.data._
 
 /**
  * Providing access only to users who provide a valid Authorization field in the http
@@ -52,7 +51,7 @@ object AuthorizedAction extends ActionBuilder[Request] with ActionFilter[Request
   }
 
   private def shouldSkipAuthorization: Boolean = {
-    Seq(Mode.Dev, Mode.Test).contains(current.mode) && current.configuration.getBoolean("auth.active") == Some(false)
+    current.configuration.getBoolean("auth.active") == Some(false)
   }
 
   override def filter[A](request: Request[A]) = Future.successful { // scalastyle:ignore public.methods.have.type
