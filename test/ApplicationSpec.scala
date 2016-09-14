@@ -55,6 +55,32 @@ class ApplicationSpec extends Specification {
     accessToken.as[String]
   }
 
+  def getSecretToken(): String = {
+    val body = AnyContentAsFormUrlEncoded(
+      Map("grant_type" -> List("client_credentials"),
+        "client_id" -> List("cafebabe-feed-d00d-badd-5eaf00d5a1ad"),
+        "client_secret" -> List("f007ba11-dad5-f1ed-dead-decafc0ffee5")))
+
+    val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
+    status(result) must equalTo(OK)
+    val contents = contentAsJson(result)
+    val accessToken = contents \ "access_token"
+    accessToken.as[String]
+  }
+
+  def getTopSecretToken(): String = {
+    val body = AnyContentAsFormUrlEncoded(
+      Map("grant_type" -> List("client_credentials"),
+        "client_id" -> List("cafebabe-feed-d00d-cafe-5eaf00d5a1ad"),
+        "client_secret" -> List("f007ba11-dad5-f1ed-dead-decafc0ffee5")))
+
+    val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
+    status(result) must equalTo(OK)
+    val contents = contentAsJson(result)
+    val accessToken = contents \ "access_token"
+    accessToken.as[String]
+  }
+
   "Application" should {
 
     /* Play default behavior has changed here. Haven't found a good solution to this yet.
@@ -152,7 +178,19 @@ class ApplicationSpec extends Specification {
 
         val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
         status(result) must throwA[UnauthorizedException]
-      }
+    }
+
+    "deny access when presented with invalid grant_type" in
+      running(TestUtil.app) {
+        val client = ClientCredentials.create("someone@met.no")
+        val body = AnyContentAsFormUrlEncoded(
+          Map("grant_type" -> List("client_credential"),
+            "client_id" -> List(client.id),
+            "client_secret" -> List(client.secret)))
+
+        val result = route(FakeRequest(POST, "/requestAccessToken").withBody(body)).get
+        status(result) must throwA[UnauthorizedException]
+    }
 
     "allow access multiple spaces in bearer token" in
       running(TestUtil.app) {
@@ -185,12 +223,64 @@ class ApplicationSpec extends Specification {
         status(secret) must throwA[UnauthorizedException]
       }
 
-    "Give error when authorization config is weird" in
+    "give error when authorization config is weird" in
       running(TestUtil.app("auth.active" -> "koko?")) {
 
         val secret = route(FakeRequest(GET, "/secret.html")).get
         status(secret) must throwA[Exception]
       }
+
+    "allow access to topsecret with valid access token and permissions" in
+      running(TestUtil.app) {
+        val userToken = getTopSecretToken()
+        val headers = FakeHeaders(List("Authorization" -> s"Bearer $userToken"))
+        val secret = route(FakeRequest(GET, "/topsecret.html", headers, "")).get
+        status(secret) must equalTo(OK)
+        contentAsString(secret) must contain("This is _really_ secret!!")
+      }
+
+    "allow access to topsecret when presented with valid user access token with some permissions" in
+      running(TestUtil.app) {
+        val userToken = getSecretToken()
+        val headers = FakeHeaders(List("Authorization" -> s"Bearer $userToken"))
+        val secret = route(FakeRequest(GET, "/topsecret.html", headers, "")).get
+        status(secret) must equalTo(OK)
+        contentAsString(secret) must contain("This is _really_ secret!!")
+    }
+
+    "deny access to topsecret when presented with invalid access token" in
+      running(TestUtil.app) {
+        val userToken = "f007ba11-dad5-f1ed-dead-decafc0ffee5"
+        val headers = FakeHeaders(List("Authorization" -> s"Bearer $userToken"))
+        val result = route(FakeRequest(GET, "/topsecret.html", headers, "")).get
+        status(result) must throwA[UnauthorizedException]
+    }
+
+    "deny access to topsecret when presented with valid user access token without permission" in
+      running(TestUtil.app) {
+        val userToken = getAccessToken()
+        val headers = FakeHeaders(List("Authorization" -> s"Bearer $userToken"))
+        val result = route(FakeRequest(GET, "/topsecret.html", headers, "")).get
+        status(result) must throwA[UnauthorizedException]
+    }
+
+    "allow access to topsecret and show priviled info with valid access token and permissions" in
+      running(TestUtil.app) {
+        val userToken = getTopSecretToken()
+        val headers = FakeHeaders(List("Authorization" -> s"Bearer $userToken"))
+        val secret = route(FakeRequest(GET, "/topsecret.html", headers, "")).get
+        status(secret) must equalTo(OK)
+        contentAsString(secret) must contain("You are privileged!")
+      }
+
+    "allow access to topsecret but deny privileged info when presented with valid user access token with some permission" in
+      running(TestUtil.app) {
+        val userToken = getSecretToken()
+        val headers = FakeHeaders(List("Authorization" -> s"Bearer $userToken"))
+        val secret = route(FakeRequest(GET, "/topsecret.html", headers, "")).get
+        status(secret) must equalTo(OK)
+        contentAsString(secret) must not contain("You are privileged!")
+    }
 
   }
 }

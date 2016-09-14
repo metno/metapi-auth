@@ -38,32 +38,31 @@ import com.google.common.io._
 @RunWith(classOf[JUnitRunner])
 class BasicAuthSpec extends Specification {
 
-
   "BasicAuth object" should {
 
     "return the username of the credentials" in {
-        val encoded = BaseEncoding.base64Url().encode("MyUserName:MyPassword".getBytes("UTF-8"))
-        BasicAuth.parse(encoded) mustEqual("MyUserName")
+      val encoded = BaseEncoding.base64Url().encode("MyUserName:MyPassword".getBytes("UTF-8"))
+      BasicAuth.parse(encoded) mustEqual ("MyUserName")
     }
 
     "ignore missing passphrase" in {
-        val encoded = BaseEncoding.base64Url().encode("MyUserName:".getBytes("UTF-8"))
-        BasicAuth.parse(encoded) mustEqual("MyUserName")
+      val encoded = BaseEncoding.base64Url().encode("MyUserName:".getBytes("UTF-8"))
+      BasicAuth.parse(encoded) mustEqual ("MyUserName")
     }
 
     "handle username without punctuation" in {
-        val encoded = BaseEncoding.base64Url().encode("MyUserName".getBytes("UTF-8"))
-        BasicAuth.parse(encoded) mustEqual("MyUserName")
+      val encoded = BaseEncoding.base64Url().encode("MyUserName".getBytes("UTF-8"))
+      BasicAuth.parse(encoded) mustEqual ("MyUserName")
     }
 
     "handle empty username and passphrase" in {
-        val encoded = BaseEncoding.base64Url().encode(":".getBytes("UTF-8"))
-        BasicAuth.parse(encoded) must throwA[UnauthorizedException]
+      val encoded = BaseEncoding.base64Url().encode(":".getBytes("UTF-8"))
+      BasicAuth.parse(encoded) must throwA[UnauthorizedException]
     }
 
     "handle an empty string" in {
-        val encoded = BaseEncoding.base64Url().encode("".getBytes("UTF-8"))
-        BasicAuth.parse(encoded) mustEqual("") // throwA[UnauthorizedException]
+      val encoded = BaseEncoding.base64Url().encode("".getBytes("UTF-8"))
+      BasicAuth.parse(encoded) mustEqual ("") // throwA[UnauthorizedException]
     }
 
   }
@@ -72,7 +71,7 @@ class BasicAuthSpec extends Specification {
 
     "identify a valid client_id" in
       running(TestUtil.app) {
-        val credentials = Authorization.newClient("someone@met.no")
+        val credentials = ClientCredentials.create("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> s"Basic $encoded"))
@@ -83,7 +82,7 @@ class BasicAuthSpec extends Specification {
 
     "should reject case-insensitive type (lower case)" in
       running(TestUtil.app) {
-        val credentials = Authorization.newClient("someone@met.no")
+        val credentials = ClientCredentials.create("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> s"basic $encoded"))
@@ -93,7 +92,7 @@ class BasicAuthSpec extends Specification {
 
     "should reject case-insensitive type (ALL CAPS)" in
       running(TestUtil.app) {
-        val credentials = Authorization.newClient("someone@met.no")
+        val credentials = ClientCredentials.create("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> s"BASIC $encoded"))
@@ -103,7 +102,7 @@ class BasicAuthSpec extends Specification {
 
     "should reject case-insensitive type (vArIED CAse)" in
       running(TestUtil.app) {
-        val credentials = Authorization.newClient("someone@met.no")
+        val credentials = ClientCredentials.create("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> s"bASiC $encoded"))
@@ -113,7 +112,7 @@ class BasicAuthSpec extends Specification {
 
     "should ignore passphrase of credentials" in
       running(TestUtil.app) {
-        val credentials = Authorization.newClient("someone@met.no")
+        val credentials = ClientCredentials.create("someone@met.no")
         val clientId = credentials.id
         val encoded = BaseEncoding.base64Url().encode(s"$clientId:DUMMY-PASSWORD".getBytes("UTF-8"))
         val headers = FakeHeaders(List("Authorization" -> s"Basic $encoded"))
@@ -130,7 +129,6 @@ class BasicAuthSpec extends Specification {
       }
 
   }
-
 
 }
 

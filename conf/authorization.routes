@@ -3,18 +3,16 @@
 # ~~~~
 
 # Credentials
-GET     /requestCredentials.html   controllers.authorization.AuthorizationController.requestCredentialsPage
-POST    /requestCredentials.html   controllers.authorization.AuthorizationController.newCredentialsRequest
-GET     /credentialsCreated.html   controllers.authorization.AuthorizationController.credentialsCreated
+GET     /requestCredentials.html        controllers.AuthorizationController.requestCredentialsPage
+POST    /requestCredentials.html        controllers.AuthorizationController.newCredentialsRequest
+GET     /credentialsCreated.html        controllers.AuthorizationController.credentialsCreated
 
 # OAuth2 token request
-POST    /requestAccessToken controllers.authorization.AuthorizationController.requestAccessToken
-
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file        controllers.Assets.at(path="/public", file)
+POST    /requestAccessToken             controllers.AuthorizationController.requestAccessToken
 
 # Test endpoint for checking authorization status
-GET     /secret.html         controllers.authorization.AuthorizationController.secret
+GET     /secret.html                    controllers.AuthorizationController.secret
+GET     /topsecret.html                 controllers.AuthorizationController.topSecret
 
 # Clear cached client_id in browser
-GET     /logout.html         controllers.authorization.AuthorizationController.logout
+GET     /logout.html                    controllers.AuthorizationController.logout

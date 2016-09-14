@@ -41,16 +41,17 @@ import com.google.common.io._
  * A time-limited bearer token, providing time-limited access to protected
  * products to a user
  */
-case class BearerToken(userId: Long, expires: DateTime) {
+case class BearerToken(userId: Long, expires: DateTime, permissions: Set[Int] = Set.empty[Int]) {
 
   /**
    * Actual data
    */
   private lazy val payload = {
 
-    val buffer = ByteBuffer.allocate(Longs.BYTES * 2)
+    val buffer = ByteBuffer.allocate((Longs.BYTES * 2) + (Ints.BYTES * permissions.size))
     buffer.putLong(userId)
-    buffer.putLong(Longs.BYTES, expires.toDate().getTime)
+    buffer.putLong(expires.toDate().getTime)
+    permissions.foreach { buffer putInt _ }
     BearerToken.encoding.encode(buffer.array())
   }
 
@@ -58,6 +59,12 @@ case class BearerToken(userId: Long, expires: DateTime) {
    * Identifier, showing that this data was created by us
    */
   private lazy val signature = BearerToken.sign(payload)
+
+  /**
+   * Get information about requesting user. Note that this method will return
+   * a valid user even if isValid returns false.
+   */
+  def user: MetApiUser = new MetApiUser(userId, permissions)
 
   /**
    * Can the token (still) be used to access data?
@@ -77,7 +84,7 @@ case class BearerToken(userId: Long, expires: DateTime) {
    * String summary of object, for logging or debugging
    */
   override def toString: String = {
-    s"BearerToken($userId, ${expires.toString})"
+    s"BearerToken($userId, ${expires.toString}, ${permissions.toString})"
   }
 }
 
@@ -88,8 +95,8 @@ object BearerToken {
   /**
    * Create a new token, that expires after the given time
    */
-  def create(userId: Long, timeToLive: Duration): BearerToken = {
-    BearerToken(userId, DateTime.now + timeToLive)
+  def create(userId: Long, timeToLive: Duration, permissions: Set[Int] = Set.empty[Int]): BearerToken = {
+    BearerToken(userId, DateTime.now + timeToLive, permissions)
   }
 
   /**
@@ -110,10 +117,17 @@ object BearerToken {
   }
 
   private def parsePayload(payload: String): BearerToken = {
-    val data = encoding.decode(payload)
-    val userId = ByteBuffer.wrap(data, 0, Longs.BYTES).getLong()
-    val expirationTime = ByteBuffer.wrap(data, Longs.BYTES, Longs.BYTES).getLong()
-    val token = BearerToken(userId, new DateTime(expirationTime))
+    val rawData = encoding.decode(payload)
+    val data = ByteBuffer.wrap(rawData)
+    val userId = data.getLong
+    val expirationTime = data.getLong
+    val permissions = data.asIntBuffer()
+    val permissionList = new scala.collection.mutable.TreeSet[Int]
+    while (permissions.hasRemaining()) {
+      permissionList.add(permissions.get)
+    }
+
+    val token = BearerToken(userId, new DateTime(expirationTime), permissionList.toSet)
     if (!token.isValid) {
       throw new Error("Invalid token")
     }

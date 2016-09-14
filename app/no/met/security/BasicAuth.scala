@@ -42,8 +42,7 @@ object BasicAuth {
     if (credentials.size > 0) {
       // We are only interested in the userId; password is discarded
       credentials(0)
-    }
-    else {
+    } else {
       throw new UnauthorizedException("Missing client ID in the request")
     }
   }

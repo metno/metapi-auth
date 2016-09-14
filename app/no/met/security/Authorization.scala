@@ -35,6 +35,8 @@ import java.sql.SQLException
 import scala.language.postfixOps
 import scala.util._
 
+//$COVERAGE-OFF$ Need to check for dead code.
+
 /**
  * Functionality for creating and verifying unique keys for identifying users.
  */
@@ -175,3 +177,5 @@ object Authorization {
     }
   }
 }
+
+//$COVERAGE-ON$ Not testing database queries

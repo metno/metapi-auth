@@ -22,7 +22,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
     MA 02110-1301, USA
 */
-package controllers.authorization
+package controllers
 
 import javax.inject.Inject
 import play.api.Play.current
@@ -41,11 +41,29 @@ import views._
 // scalastyle:off public.methods.have.type
 
 class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends Controller with I18nSupport {
+
   /**
    * Sample page to verify that authorization mechanism works
    */
   def secret = AuthorizedAction {
     Ok("Don't tell\n")
+  }
+
+  /**
+   * Sample page to test user permissions
+   */
+  def topSecret = PermissionRestrictedAction(Seq(0)) { request =>
+
+    val r = request.asInstanceOf[AuthorizededRequest[AnyContent]]
+    val user = r.user
+
+    val permissions = user.permissions.mkString
+    var text = s"This is _really_ secret!! "
+    if (user.authorized(1)) {
+      text += "You are privileged!\n"
+    }
+
+    Ok(text)
   }
 
   def logout = Action {
@@ -74,7 +92,7 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
           BadRequest(views.html.requestCredentials(formWithErrors)) //"You need to provide a valid email address to get a key - please try again")
         },
         user => {
-          val client = Authorization.newClient(user)
+          val client = ClientCredentials.create(user)
           //Logger.debug(s"Registered key ${client} for user ${user}")
           val serviceConf = ConfigUtil.serviceConf
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
@@ -104,7 +122,7 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
       accessTokenRequestForm.bindFromRequest.fold(
         errors => throw new BadRequestException("Invalid input."),
         validRequest => {
-          Authorization.generateBearerToken(validRequest) match {
+          validRequest.generateBearerToken() match {
             case Success(key) =>
               Ok(Json.obj("access_token" -> key))
             case Failure(x) => {

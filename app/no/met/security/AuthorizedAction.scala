@@ -40,25 +40,33 @@ import no.met.security._
  * Note that this functionality may be turned off in application.conf, by
  * setting auth.active to false.
  */
-object AuthorizedAction extends ActionBuilder[Request] with ActionFilter[Request] {
+object AuthorizedAction extends PermissionRestrictedAction(Seq.empty[Int])
 
-  private def authorize[A](request: Request[A]) = {
+class AuthorizededRequest[A](val user: MetApiUser, request: Request[A]) extends WrappedRequest[A](request)
+
+case class PermissionRestrictedAction(permissionsRequired: Traversable[Int])
+    extends ActionBuilder[Request] with ActionTransformer[Request, AuthorizededRequest] {
+
+  private def authenticate[A](request: Request[A]): MetApiUser = {
     request.headers.get("Authorization") match {
-      case Some(x) if (Authorization.validateAuthorization(x)) => None
-      case Some(_) => throw new UnauthorizedException("Unrecognized authentication token")
+      case Some(x) => Authentication.identifyUser(x)
       case None => throw new UnauthorizedException("Missing authentication token")
     }
   }
 
   private def shouldSkipAuthorization: Boolean = {
-    current.configuration.getBoolean("auth.active") == Some(false)
+    Seq(Mode.Dev, Mode.Test).contains(current.mode) && current.configuration.getBoolean("auth.active") == Some(false)
   }
 
-  override def filter[A](request: Request[A]) = Future.successful { // scalastyle:ignore public.methods.have.type
-    if (!shouldSkipAuthorization) {
-      authorize(request)
+  override protected def transform[A](request: Request[A]): Future[AuthorizededRequest[A]] = Future.successful {
+    if (shouldSkipAuthorization) {
+      new AuthorizededRequest(new MetApiUser(-1, Set.empty[Int]), request)
     } else {
-      None
+      val user = authenticate(request)
+      if (!user.authorized(permissionsRequired)) {
+        throw new UnauthorizedException("Not authorized to access the requested data")
+      }
+      new AuthorizededRequest(user, request)
     }
   }
 }

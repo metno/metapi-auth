@@ -37,8 +37,8 @@ import com.github.nscala_time.time.Imports._
 @RunWith(classOf[JUnitRunner])
 class BearerTokenSpec extends Specification {
 
-  def createToken(milliSecondsToLive: Long = 500, userId: Long = 0): BearerToken =
-    BearerToken.create(userId, Duration.millis(milliSecondsToLive))
+  def createToken(milliSecondsToLive: Long = 500, userId: Long = 0, permissions: Set[Int] = Set.empty[Int]): BearerToken =
+    BearerToken.create(userId, Duration.millis(milliSecondsToLive), permissions)
 
   "BearerTokens" should {
 
@@ -60,6 +60,13 @@ class BearerTokenSpec extends Specification {
     "be parseable" in
       running(TestUtil.app) {
         val token = createToken()
+        val representation = token.encoded
+        BearerToken.parse(representation) must equalTo(Success(token))
+      }
+
+    "be parseable with added permissions" in
+      running(TestUtil.app) {
+        val token = createToken(permissions = Set(1, 2, 3))
         val representation = token.encoded
         BearerToken.parse(representation) must equalTo(Success(token))
       }
