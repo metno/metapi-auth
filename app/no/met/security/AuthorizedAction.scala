@@ -55,7 +55,7 @@ case class PermissionRestrictedAction(permissionsRequired: Traversable[Int])
   }
 
   private def shouldSkipAuthorization: Boolean = {
-    Seq(Mode.Dev, Mode.Test).contains(current.mode) && current.configuration.getBoolean("auth.active") == Some(false)
+    current.configuration.getBoolean("auth.active") == Some(false)
   }
 
   override protected def transform[A](request: Request[A]): Future[AuthorizededRequest[A]] = Future.successful {

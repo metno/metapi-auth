@@ -56,7 +56,6 @@ case class ClientCredentials(id: String, secret: String) {
   private def userPermissions(id: Long)(implicit conn: java.sql.Connection): Set[Int] = {
     SQL("SELECT permission FROM user_permissions WHERE owner_id={id}").on("id" -> id)
       .as(SqlParser.int(1).*)
-//      .map(SqlParser.i) // for some reason, SqlParser.short fails, because it believes the data is an int instead of short.
       .toSet
   }
 }
