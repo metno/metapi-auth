@@ -3,8 +3,8 @@
 # ~~~~
 
 # Credentials
-GET     /requestCredentials.html        controllers.AuthorizationController.requestCredentialsPage
-POST    /requestCredentials.html        controllers.AuthorizationController.newCredentialsRequest
+GET     /requestCredentials.html        controllers.AuthorizationController.requestClientIdPage
+POST    /requestCredentials.html        controllers.AuthorizationController.newClientIdRequest
 GET     /credentialsCreated.html        controllers.AuthorizationController.credentialsCreated
 
 # OAuth2 token request

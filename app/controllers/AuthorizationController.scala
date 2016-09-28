@@ -71,23 +71,18 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
       throw new UnauthorizedException("Credentials have been invalidated.")
   }
 
-  private val credentialsRequestForm = Form(single("email" -> email))
+  // Define form
+  val clientIdRequestForm = Form(single("email" -> email))
 
-  /**
-   * Get the page to order api tokens
-   *
-   * TODO: Rename to requestNewClientPage or something
-   */
-  def requestCredentialsPage = Action {
-    Ok(views.html.requestCredentials(credentialsRequestForm))
+  // Create request page with form
+  def requestClientIdPage = Action {
+    Ok(views.html.requestCredentials(clientIdRequestForm))
   }
 
-  /**
-   * Result from having submitted a request for a new api token
-   */
-  def newCredentialsRequest = Action {
+  // Handle result of a form submitted via the form
+  def newClientIdRequest = Action {
     implicit request =>
-      credentialsRequestForm.bindFromRequest.fold(
+      clientIdRequestForm.bindFromRequest.fold(
         formWithErrors => {
           BadRequest(views.html.requestCredentials(formWithErrors)) //"You need to provide a valid email address to get a key - please try again")
         },
@@ -131,6 +126,7 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
           }
         })
   }
+  
 }
 
 // scalastyle:on
