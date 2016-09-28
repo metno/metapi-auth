@@ -22,7 +22,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
     MA 02110-1301, USA
 */
-package controllers
+package controllers.auth
 
 import javax.inject.Inject
 import play.api.Play.current

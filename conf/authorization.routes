@@ -3,16 +3,16 @@
 # ~~~~
 
 # Credentials
-GET     /requestCredentials.html        controllers.AuthorizationController.requestClientIdPage
-POST    /requestCredentials.html        controllers.AuthorizationController.newClientIdRequest
-GET     /credentialsCreated.html        controllers.AuthorizationController.credentialsCreated
+GET     /requestCredentials.html        controllers.auth.AuthorizationController.requestClientIdPage
+POST    /requestCredentials.html        controllers.auth.AuthorizationController.newClientIdRequest
+GET     /credentialsCreated.html        controllers.auth.AuthorizationController.credentialsCreated
 
 # OAuth2 token request
-POST    /requestAccessToken             controllers.AuthorizationController.requestAccessToken
+POST    /requestAccessToken             controllers.auth.AuthorizationController.requestAccessToken
 
 # Test endpoint for checking authorization status
-GET     /secret.html                    controllers.AuthorizationController.secret
-GET     /topsecret.html                 controllers.AuthorizationController.topSecret
+GET     /secret.html                    controllers.auth.AuthorizationController.secret
+GET     /topsecret.html                 controllers.auth.AuthorizationController.topSecret
 
 # Clear cached client_id in browser
-GET     /logout.html                    controllers.AuthorizationController.logout
+GET     /logout.html                    controllers.auth.AuthorizationController.logout
