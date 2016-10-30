@@ -1,6 +1,6 @@
 organization := "no.met.data"
 name := """auth"""
-version := "0.3-SNAPSHOT"
+version := "0.4-SNAPSHOT"
 description := "Basic authorization module used by the metapi."
 homepage :=  Some(url(s"https://github.com/metno"))
 licenses += "GPL-2.0" -> url("https://www.gnu.org/licenses/gpl-2.0.html")
@@ -22,10 +22,10 @@ libraryDependencies ++= Seq(
   cache,
   evolutions,
   ws,
- "com.typesafe.play" %% "anorm" % "2.4.0",
- "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
+ "com.typesafe.play" %% "anorm" % "2.5.2",
+ "org.postgresql" % "postgresql" % "9.4.1211",
  "com.github.nscala-time" %% "nscala-time" % "2.14.0",
- "no.met.data" %% "util" % "0.3-SNAPSHOT",
+ "no.met.data" %% "util" % "0.4-SNAPSHOT",
   specs2 % Test
 )
 

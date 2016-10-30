@@ -25,13 +25,13 @@
 
 package no.met.security
 
-import play.api.Play.current
-import play.api.db._
+import javax.inject.Inject
 import anorm._
 import anorm.SqlParser._
 import com.github.nscala_time.time.Imports._
 import java.util.UUID
 import java.sql.SQLException
+import play.api.db._
 import scala.language.postfixOps
 import scala.util._
 
@@ -40,7 +40,7 @@ import scala.util._
 /**
  * Functionality for creating and verifying unique keys for identifying users.
  */
-object Authorization {
+class Authorization @Inject() (@NamedDatabase("authorization") db: Database) {
 
   case class Owner(id: Long)
   
@@ -64,7 +64,7 @@ object Authorization {
    * @return Valid credentials, associated with the given email address
    */
   def newClient(userEmail: String): ClientCredentials = {
-    DB.withTransaction("authorization") { implicit conn =>
+    db.withTransaction { implicit conn =>
 
       val id = createUniqueKey()
       val secret = createUniqueKey()
@@ -77,8 +77,8 @@ object Authorization {
 
   @throws[Exception]("If unable to access database, or not authenticated")
   private def authenticate(client: ClientCredentials): Long = {
-    val testEmail = if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
-    DB.withConnection("authorization") { implicit conn =>
+    val testEmail = "root@localhost" //if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
+    db.withConnection { implicit conn =>
       val result = SQL("SELECT owner_id, client_id FROM authorized_keys WHERE client_id={id}::uuid AND client_secret={secret}::uuid AND active='true' AND email <> {email}")
         .on("id" -> client.id, "secret" -> client.secret, "email" -> testEmail)
         .as( parser * )
@@ -135,8 +135,8 @@ object Authorization {
 
   @throws[Exception]("If unable to access database, or not authenticated")
   private def identify(clientId: String): Try[Long] = Try {
-    val testEmail = if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
-    DB.withConnection("authorization") { implicit conn =>
+    val testEmail = "root@localhost" //if (play.api.Play.isDev(play.api.Play.current) || play.api.Play.isTest(play.api.Play.current)) { "" }  else { "root@localhost" }
+    db.withConnection { implicit conn =>
       val result = SQL("SELECT owner_id FROM authorized_keys WHERE client_id={id}::uuid AND active='true' AND email <> {email}")
         .on("id" -> clientId, "email" -> testEmail)
         .as( parser * )

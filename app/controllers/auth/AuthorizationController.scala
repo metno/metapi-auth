@@ -40,8 +40,10 @@ import views._
 
 // scalastyle:off public.methods.have.type
 
-class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends Controller with I18nSupport {
+class AuthorizationController @Inject() (val configuration: Configuration, val environment: Environment, val messagesApi: MessagesApi) extends Controller with I18nSupport {
 
+  val config = new ConfigUtil(configuration, environment)
+  
   /**
    * Sample page to verify that authorization mechanism works
    */
@@ -89,7 +91,7 @@ class AuthorizationController @Inject() (val messagesApi: MessagesApi) extends C
         user => {
           val client = ClientCredentials.create(user)
           //Logger.debug(s"Registered key ${client} for user ${user}")
-          val serviceConf = ConfigUtil.serviceConf
+          val serviceConf = config.serviceConf
           Redirect(routes.AuthorizationController.credentialsCreated).flashing(
             "scheme" -> serviceConf("scheme"),
             "server" -> serviceConf("server"),

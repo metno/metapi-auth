@@ -25,6 +25,7 @@
 
 package no.met.security
 
+import javax.inject.Inject
 import play.api.Play.current
 import play.api.db._
 import anorm._
@@ -33,10 +34,10 @@ import scala.language.postfixOps
 import scala.util._
 import java.util.UUID
 
-case class ClientCredentials(id: String, secret: String) {
+class ClientCredentials @Inject()(id: String, secret: String, @NamedDatabase("authorization") db: Database) {
 
   def user: Try[MetApiUser] = Try {
-    DB.withConnection("authorization") { implicit conn =>
+    db.withConnection("authorization") { implicit conn =>
       val id = userId()
       val permissions = userPermissions(id)
       new MetApiUser(id, permissions)
